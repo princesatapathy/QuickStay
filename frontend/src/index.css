@@ -1,0 +1,107 @@
+@import "tailwindcss";
+
+/* ─── Design tokens — Material Design 3 (Stitch palette) ───────────────────── */
+:root {
+  --font-body: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* Brand — coral red primary (Airbnb-style) */
+  --color-primary:               #ff385c;
+  --color-on-primary:            #ffffff;
+  --color-primary-container:     #ffe4e8;
+  --color-primary-dim:           #ffb2b6;
+  --color-primary-dark:          #e21e4a;
+
+  /* Surfaces */
+  --color-bg:                    #ffffff;
+  --color-surface:               #f9f9f9;
+  --color-surface-container:     #eeeeee;
+  --color-surface-container-low: #f3f3f3;
+  --color-surface-dim:           #dadada;
+
+  /* Text */
+  --color-on-background:         #1a1c1c;
+  --color-on-surface-variant:    #4a4a4a;
+  --color-muted:                 #757575;
+
+  /* Borders */
+  --color-outline:               #906f70;
+  --color-outline-variant:       #d6c2c3;
+
+  /* Semantic */
+  --color-error:                 #ba1a1a;
+  --color-error-container:       #ffdad6;
+  --color-success:               #1a7a3c;
+  --color-success-container:     #d6f5e3;
+  --color-warning:               #b45309;
+  --color-warning-container:     #fef3c7;
+
+  /* Legacy compat (used in some inline Tailwind classes) */
+  --color-orange: #f97316;
+  --color-teal:   #0d9488;
+}
+
+/* ─── Reset / Base ─────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-on-background);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* ─── Root ─────────────────────────────────────────────────────────────────── */
+#root {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── Typography — Manrope for everything ──────────────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-body);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  /* No color here — let Tailwind utility classes (text-white, text-gray-900, etc.) win */
+  margin: 0;
+}
+
+p, span, button, input, select, textarea, label {
+  font-family: var(--font-body);
+  margin: 0;
+}
+
+a { color: inherit; text-decoration: none; }
+
+/* ─── Scrollbar (webkit) ───────────────────────────────────────────────────── */
+::-webkit-scrollbar              { width: 6px; height: 6px; }
+::-webkit-scrollbar-track        { background: transparent; }
+::-webkit-scrollbar-thumb        { background: var(--color-outline-variant); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover  { background: var(--color-outline); }
+
+/* ─── Date input ───────────────────────────────────────────────────────────── */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0.5;
+  cursor: pointer;
+}
+
+/* ─── Focus ring ───────────────────────────────────────────────────────────── */
+*:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ─── Images ───────────────────────────────────────────────────────────────── */
+img {
+  max-width: 100%;
+  display: block;
+}

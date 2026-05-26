@@ -1,0 +1,13 @@
+.git
+.idea
+.vscode
+.claude
+frontend/node_modules
+frontend/dist
+node_modules
+target
+*.log
+*.err
+*.png
+ss-*.js
+take-ss*.js
