@@ -1,4 +1,4 @@
-﻿package com.quickstay.Entities;
+package com.quickstay.Entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;

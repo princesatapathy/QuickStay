@@ -1,4 +1,4 @@
-﻿package com.quickstay.Dto;
+package com.quickstay.Dto;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;

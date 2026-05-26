@@ -1,4 +1,4 @@
-﻿package com.quickstay.Exceptions;
+package com.quickstay.Exceptions;
 
 public class ResourceNotFoundException extends RuntimeException{
     public ResourceNotFoundException(String message) {

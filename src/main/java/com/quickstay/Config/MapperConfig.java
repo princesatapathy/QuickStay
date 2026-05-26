@@ -1,4 +1,4 @@
-﻿package com.quickstay.Config;
+package com.quickstay.Config;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.context.annotation.Bean;

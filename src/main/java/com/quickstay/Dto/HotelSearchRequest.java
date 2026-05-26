@@ -1,4 +1,4 @@
-﻿package com.quickstay.Dto;
+package com.quickstay.Dto;
 
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.FutureOrPresent;

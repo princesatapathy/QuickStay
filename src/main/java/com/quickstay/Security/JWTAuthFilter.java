@@ -1,4 +1,4 @@
-﻿package com.quickstay.Security;
+package com.quickstay.Security;
 
 import com.quickstay.Entities.UserEntity;
 import com.quickstay.Service.Interfaces.UserService;

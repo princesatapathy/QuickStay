@@ -1,4 +1,4 @@
-﻿package com.quickstay.Service.Interfaces;
+package com.quickstay.Service.Interfaces;
 
 
 

@@ -1,4 +1,4 @@
-﻿package com.quickstay.Integration;
+package com.quickstay.Integration;
 
 import com.quickstay.Dto.BookingDTO;
 import com.quickstay.Dto.BookingPaymentInitResponseDTO;

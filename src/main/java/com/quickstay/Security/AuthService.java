@@ -1,4 +1,4 @@
-﻿package com.quickstay.Security;
+package com.quickstay.Security;
 
 import com.quickstay.Dto.LoginDTO;
 import com.quickstay.Dto.ManagerSignUpRequestDTO;

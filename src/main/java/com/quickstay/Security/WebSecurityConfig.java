@@ -1,4 +1,4 @@
-﻿package com.quickstay.Security;
+package com.quickstay.Security;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,4 +1,4 @@
-﻿package com.quickstay.Repositories;
+package com.quickstay.Repositories;
 
 import com.quickstay.Entities.HotelEntity;
 import com.quickstay.Entities.InventoryEntity;

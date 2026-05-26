@@ -1,4 +1,4 @@
-﻿package com.quickstay.Advice;
+package com.quickstay.Advice;
 
 import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;

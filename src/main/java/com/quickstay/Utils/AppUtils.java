@@ -1,4 +1,4 @@
-﻿package com.quickstay.Utils;
+package com.quickstay.Utils;
 
 import com.quickstay.Entities.UserEntity;
 import org.springframework.security.core.context.SecurityContextHolder;

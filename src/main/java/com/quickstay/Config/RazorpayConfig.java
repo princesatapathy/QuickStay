@@ -1,4 +1,4 @@
-﻿package com.quickstay.Config;
+package com.quickstay.Config;
 
 import com.razorpay.RazorpayClient;
 import com.razorpay.RazorpayException;

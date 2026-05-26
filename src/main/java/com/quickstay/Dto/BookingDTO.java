@@ -1,4 +1,4 @@
-﻿package com.quickstay.Dto;
+package com.quickstay.Dto;
 
 import com.quickstay.Enums.BookingStatus;
 import lombok.Data;

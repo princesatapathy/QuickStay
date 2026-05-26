@@ -1,4 +1,4 @@
-﻿package com.quickstay.Testcontainers;
+package com.quickstay.Testcontainers;
 
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;

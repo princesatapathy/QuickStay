@@ -1,4 +1,4 @@
-﻿package com.quickstay.Service;
+package com.quickstay.Service;
 
 import com.quickstay.Entities.HotelEntity;
 import com.quickstay.Entities.HotelMinPriceEntity;

@@ -1,4 +1,4 @@
-﻿package com.quickstay.Controller;
+package com.quickstay.Controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

@@ -1,4 +1,4 @@
-﻿package com.quickstay.Enums;
+package com.quickstay.Enums;
 
 public enum Gender {
     MALE,

@@ -1,4 +1,4 @@
-﻿package com.quickstay.Advice;
+package com.quickstay.Advice;
 
 import com.quickstay.Exceptions.ResourceNotFoundException;
 import com.quickstay.Exceptions.UnAuthorisedException;

@@ -1,4 +1,4 @@
-﻿package com.quickstay.Controller;
+package com.quickstay.Controller;
 
 import com.quickstay.Dto.InventoryDTO;
 import com.quickstay.Dto.UpdateInventoryRequestDTO;

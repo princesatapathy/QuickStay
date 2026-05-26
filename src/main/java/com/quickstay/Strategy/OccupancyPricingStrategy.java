@@ -1,4 +1,4 @@
-﻿package com.quickstay.Strategy;
+package com.quickstay.Strategy;
 
 import com.quickstay.Entities.InventoryEntity;
 import lombok.RequiredArgsConstructor;

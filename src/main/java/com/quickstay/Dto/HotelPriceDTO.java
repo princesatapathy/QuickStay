@@ -1,4 +1,4 @@
-﻿package com.quickstay.Dto;
+package com.quickstay.Dto;
 
 import com.quickstay.Entities.HotelEntity;
 import lombok.AllArgsConstructor;

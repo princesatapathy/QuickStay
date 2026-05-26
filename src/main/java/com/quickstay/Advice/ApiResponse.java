@@ -1,4 +1,4 @@
-﻿package com.quickstay.Advice;
+package com.quickstay.Advice;
 
 import lombok.Data;
 

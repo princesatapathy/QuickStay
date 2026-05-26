@@ -1,4 +1,4 @@
-﻿package com.quickstay.Controller;
+package com.quickstay.Controller;
 
 import com.quickstay.Dto.BookingDTO;
 import com.quickstay.Dto.GuestDTO;

@@ -1,4 +1,4 @@
-﻿package com.quickstay.Controller;
+package com.quickstay.Controller;
 
 import com.quickstay.Service.Interfaces.BookingService;
 import com.quickstay.Security.JWTAuthFilter;

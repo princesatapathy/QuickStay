@@ -1,4 +1,4 @@
-﻿package com.quickstay.Dto;
+package com.quickstay.Dto;
 
 import com.quickstay.Entities.HotelContactInfo;
 import jakarta.validation.constraints.NotBlank;

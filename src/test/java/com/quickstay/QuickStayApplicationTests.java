@@ -1,4 +1,4 @@
-﻿package com.quickstay;
+package com.quickstay;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
