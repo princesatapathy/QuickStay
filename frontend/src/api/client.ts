@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // In dev: Vite proxy handles /api → localhost:8080
-// In prod: set VITE_API_BASE_URL=https://your-backend.railway.app/api/v1
+// In prod: set VITE_API_BASE_URL=https://quickstay-api-princesatapathy.onrender.com/api/v1
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? '/api/v1',
   withCredentials: true,

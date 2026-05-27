@@ -21,4 +21,4 @@ COPY --from=build /workspace/target/*.jar /app/app.jar
 
 EXPOSE 8080
 
-CMD ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar"]
+CMD ["sh", "-c", "if [ -n \"$DATABASE_URL\" ] && [ -z \"$SPRING_DATASOURCE_URL\" ]; then DB_NO_PROTO=\"${DATABASE_URL#postgresql://}\"; DB_HOST_PATH=\"${DB_NO_PROTO#*@}\"; export SPRING_DATASOURCE_URL=\"jdbc:postgresql://${DB_HOST_PATH}\"; fi; java $JAVA_OPTS -jar /app/app.jar"]
