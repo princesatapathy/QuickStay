@@ -29,7 +29,7 @@ public class GuestServiceImpl implements GuestService {
     public List<GuestDTO> getAllGuests() {
         UserEntity user = getCurrentUser();
         log.info("Fetching all guests of user with id: {}", user.getId());
-        List<GuestDTO> guests = guestRepository.findByUser(user);
+        List<GuestEntity> guests = guestRepository.findByUser(user);
         return guests.stream()
                 .map(guest -> modelMapper.map(guest, GuestDTO.class))
                 .collect(Collectors.toList());

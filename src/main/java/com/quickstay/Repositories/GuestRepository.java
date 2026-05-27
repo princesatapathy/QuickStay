@@ -1,6 +1,5 @@
 package com.quickstay.Repositories;
 
-import com.quickstay.Dto.GuestDTO;
 import com.quickstay.Entities.GuestEntity;
 import com.quickstay.Entities.UserEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,5 +9,5 @@ import java.util.List;
 
 @Repository
 public interface GuestRepository extends JpaRepository<GuestEntity, Long> {
-    List<GuestDTO> findByUser(UserEntity user);
+    List<GuestEntity> findByUser(UserEntity user);
 }

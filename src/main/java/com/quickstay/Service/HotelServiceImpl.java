@@ -114,6 +114,10 @@ public class HotelServiceImpl implements HotelService {
             throw new UnAuthorisedException("This user does not own this hotel with id: "+hotelId);
         }
 
+        if (hotel.getActive()) {
+            log.info("Hotel with ID: {} is already active, skipping", hotelId);
+            return;
+        }
         hotel.setActive(true);
         // assuming only do it once
         for(RoomEntity room: hotel.getRooms()) {
