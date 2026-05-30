@@ -291,7 +291,7 @@ export default function Home() {
       {/* ──────────────────────────────────────────────────────
           HERO — full viewport height, photo background
       ─────────────────────────────────────────────────────── */}
-      <section className="relative min-h-[820px] flex flex-col items-center justify-center overflow-hidden">
+      <section className="relative min-h-[820px] flex flex-col items-center justify-center overflow-hidden pt-16">
         {/* Background photo */}
         <div
           className="absolute inset-0 bg-cover bg-center"
