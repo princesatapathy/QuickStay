@@ -327,7 +327,7 @@ export default function Home() {
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
             Featured Destination
           </h2>
-          <p className="text-gray-500 max-w-xl mx-auto text-sm sm:text-base leading-relaxed">
+          <p className="text-gray-500 max-w-xl mx-auto text-sm sm:text-base leading-relaxed text-center">
             Discover our handpicked selection of exceptional properties around the world, offering
             unparalleled luxury and unforgettable experiences.
           </p>
