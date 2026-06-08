@@ -71,9 +71,9 @@ export default function HotelDetail() {
 
   const [hotel,       setHotel]       = useState<Hotel | null>(null);
   const [roomList,    setRoomList]    = useState<Room[]>([]);
-  const [loading,     setLoading]     = useState(true);
-  const [bookingLoad, setBookingLoad] = useState(false);
-  const [error,       setError]       = useState('');
+  const [loading,        setLoading]        = useState(true);
+  const [bookingRoomId,  setBookingRoomId]  = useState<number | null>(null);
+  const [error,          setError]          = useState('');
 
   const nights = Math.max(1,
     Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000),
@@ -102,7 +102,7 @@ export default function HotelDetail() {
       navigate(`/login?redirect=/hotels/${hotelId}?checkIn=${checkIn}&checkOut=${checkOut}&rooms=${guests}`);
       return;
     }
-    setBookingLoad(true); setError('');
+    setBookingRoomId(roomId); setError('');
     try {
       const res = await initBooking({
         hotelId: Number(hotelId), roomId, checkInDate: checkIn, checkOutDate: checkOut, roomsCount: guests,
@@ -112,14 +112,14 @@ export default function HotelDetail() {
       const e = err as { response?: { data?: { message?: string } } };
       setError(e.response?.data?.message || 'Booking failed. Try again.');
     } finally {
-      setBookingLoad(false);
+      setBookingRoomId(null);
     }
   };
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-900 border-t-transparent" />
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#ff385c] border-t-transparent" />
       </div>
     );
   }
@@ -168,10 +168,8 @@ export default function HotelDetail() {
         {/* ── Hotel title + price ─────────────────────────────────────────── */}
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 italic mb-2">
-              Experience Luxury Like Never Before
-            </h1>
-            <p className="font-bold text-xl text-gray-900">{hotel.name}</p>
+            <h1 className="font-bold text-2xl sm:text-3xl text-gray-900 mb-1">{hotel.name}</h1>
+            <p className="text-sm text-gray-400 italic mb-1">Experience Luxury Like Never Before</p>
             <div className="flex items-center gap-2 mt-1">
               <div className="flex gap-0.5">
                 {Array.from({ length: 5 }).map((_, i) => (
@@ -293,7 +291,7 @@ export default function HotelDetail() {
             <h2 className="text-xl font-bold text-gray-900 mb-6">
               Available Rooms
               <span className="text-sm font-normal text-gray-400 ml-2">
-                {checkIn} → {checkOut} · {nights} night{nights !== 1 ? 's' : ''}
+                {new Date(checkIn).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} → {new Date(checkOut).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} · {nights} night{nights !== 1 ? 's' : ''}
               </span>
             </h2>
 
@@ -334,10 +332,10 @@ export default function HotelDetail() {
                         </div>
                         <button
                           onClick={() => handleBook(room.id)}
-                          disabled={bookingLoad}
-                          className="px-6 py-3 bg-gray-900 text-white rounded-xl text-sm font-semibold hover:bg-gray-700 disabled:opacity-50 transition-colors"
+                          disabled={bookingRoomId === room.id}
+                          className="px-6 py-3 bg-[#ff385c] text-white rounded-xl text-sm font-semibold hover:bg-[#e21e4a] disabled:opacity-50 transition-colors"
                         >
-                          {bookingLoad ? 'Booking…' : 'Reserve Now'}
+                          {bookingRoomId === room.id ? 'Booking…' : 'Reserve Now'}
                         </button>
                       </div>
                     </div>

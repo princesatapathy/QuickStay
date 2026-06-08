@@ -30,6 +30,7 @@ interface Guest { id: number; name: string; gender: string; age: number }
 interface BookingStatus {
   id: number; bookingStatus: string; amount: number;
   checkInDate: string; checkOutDate: string; roomsCount: number;
+  createdAt?: string;
   hotel?: { name: string; city: string }; room?: { type: string };
 }
 
@@ -69,12 +70,9 @@ function initials(name: string) {
 }
 
 /* ─── Countdown timer ────────────────────────────────────────────────────────── */
-function CountdownTimer({ bookingId }: { bookingId: string }) {
-  const storageKey = `qs_booking_start_${bookingId}`;
+function CountdownTimer({ createdAt }: { createdAt: string }) {
   const [secs, setSecs] = useState<number>(() => {
-    const stored = localStorage.getItem(storageKey);
-    if (!stored) { localStorage.setItem(storageKey, String(Date.now())); return 600; }
-    const elapsed = Math.floor((Date.now() - Number(stored)) / 1000);
+    const elapsed = Math.floor((Date.now() - new Date(createdAt).getTime()) / 1000);
     return Math.max(0, 600 - elapsed);
   });
 
@@ -146,10 +144,12 @@ function Stepper({ step }: { step: 1 | 2 | 3 }) {
 function BookingSummary({ booking }: { booking: BookingStatus }) {
   const nights   = nightsBetween(booking.checkInDate, booking.checkOutDate);
   const subtotal = booking.amount ?? 0;
-  // Backend amount IS the final total; reverse-engineer nightly rate for display
-  const fee      = Math.round(subtotal * 0.05);
-  const tax      = Math.round(subtotal * 0.025);
-  const baseNightly = Math.round((subtotal - fee - tax) / Math.max(1, nights));
+  // Backend amount IS the final total; reverse-engineer nightly rate for display.
+  // Compute fee/tax without rounding first so all lines sum exactly to subtotal.
+  const fee         = subtotal * 0.05;
+  const tax         = subtotal * 0.025;
+  const baseTotal   = subtotal - fee - tax;
+  const baseNightly = Math.round(baseTotal / Math.max(1, nights));
   const imgUrl   = HOTEL_IMGS[booking.id % HOTEL_IMGS.length];
 
   return (
@@ -189,15 +189,15 @@ function BookingSummary({ booking }: { booking: BookingStatus }) {
         <div className="space-y-2 text-sm border-t border-gray-100 pt-4">
           <div className="flex justify-between text-[#4a4a4a]">
             <span>₹{baseNightly.toLocaleString()} × {nights} night{nights > 1 ? 's' : ''}</span>
-            <span>₹{(baseNightly * nights).toLocaleString()}</span>
+            <span>₹{Math.round(baseTotal).toLocaleString()}</span>
           </div>
           <div className="flex justify-between text-[#4a4a4a]">
             <span>Service fee (5%)</span>
-            <span>₹{fee.toLocaleString()}</span>
+            <span>₹{Math.round(fee).toLocaleString()}</span>
           </div>
           <div className="flex justify-between text-[#4a4a4a]">
             <span>Taxes (2.5%)</span>
-            <span>₹{tax.toLocaleString()}</span>
+            <span>₹{Math.round(tax).toLocaleString()}</span>
           </div>
           <div className="flex justify-between font-bold text-[#1a1c1c] pt-2 border-t border-gray-100 text-base">
             <span>Total</span>
@@ -223,9 +223,10 @@ export default function BookingDetail() {
   const [booking,        setBooking]        = useState<BookingStatus | null>(null);
   const [savedGuests,    setSavedGuests]    = useState<Guest[]>([]);
   const [selectedGuests, setSelectedGuests] = useState<Guest[]>([]);
-  const [loading,        setLoading]        = useState(true);
-  const [actionLoading,  setActionLoading]  = useState(false);
-  const [error,          setError]          = useState('');
+  const [loading,           setLoading]           = useState(true);
+  const [actionLoading,     setActionLoading]     = useState(false);
+  const [error,             setError]             = useState('');
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   const fetchStatus = useCallback(() => {
     if (!bookingId) return;
@@ -272,10 +273,12 @@ export default function BookingDetail() {
         handler: async (r) => {
           try { await verifyPayment(Number(bookingId), r); fetchStatus(); }
           catch { setError('Payment verified failed. Contact support. Booking #' + bookingId); }
+          finally { setActionLoading(false); }
         },
         modal: { ondismiss: () => { setError('Payment cancelled. Retry anytime.'); setActionLoading(false); } },
       });
       rzp.open();
+      setActionLoading(false); // modal is now open; re-enable button while user interacts
     } catch (e: unknown) {
       const err = e as { response?: { data?: { message?: string } }; message?: string };
       setError(err.response?.data?.message ?? err.message ?? 'Payment initiation failed');
@@ -294,11 +297,11 @@ export default function BookingDetail() {
   };
 
   const handleCancel = async () => {
-    if (!bookingId || !confirm('Cancel this booking? This cannot be undone.')) return;
+    if (!bookingId) return;
     setActionLoading(true);
     try { await cancelBooking(Number(bookingId)); fetchStatus(); }
     catch { setError('Cancel failed'); }
-    finally { setActionLoading(false); }
+    finally { setActionLoading(false); setShowCancelConfirm(false); }
   };
 
   /* ── Loading ── */
@@ -310,13 +313,13 @@ export default function BookingDetail() {
 
   const status = booking?.bookingStatus ?? '';
   const showStepper = status === 'RESERVED' || status === 'GUESTS_ADDED';
-  const stepperStep: 1 | 2 | 3 = status === 'GUESTS_ADDED' || status === 'PAYMENTS_PENDING' ? 3 : 2;
+  const stepperStep: 1 | 2 | 3 = status === 'GUESTS_ADDED' ? 3 : 2;
   const showSidebar = status === 'RESERVED' || status === 'GUESTS_ADDED';
 
   return (
     <div className="min-h-screen bg-[#f9f9f9]">
       {/* ── Top bar ── */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-40">
+      <div className="bg-white border-b border-gray-200 sticky top-16 z-40">
         <div className="max-w-6xl mx-auto px-4 sm:px-8 py-3 flex items-center justify-between">
           <button
             onClick={() => navigate('/profile')}
@@ -325,8 +328,8 @@ export default function BookingDetail() {
             <ArrowLeft size={16} /> My Bookings
           </button>
 
-          {(status === 'RESERVED' || status === 'GUESTS_ADDED') && bookingId && (
-            <CountdownTimer bookingId={bookingId} />
+          {(status === 'RESERVED' || status === 'GUESTS_ADDED') && booking?.createdAt && (
+            <CountdownTimer createdAt={booking.createdAt} />
           )}
         </div>
       </div>
@@ -438,13 +441,33 @@ export default function BookingDetail() {
                       {actionLoading ? 'Saving…' : 'Continue to Payment'}
                       {!actionLoading && <ChevronRight size={16} />}
                     </button>
-                    <button
-                      onClick={handleCancel}
-                      disabled={actionLoading}
-                      className="px-5 py-3 border border-gray-200 text-[#4a4a4a] rounded-xl hover:bg-gray-50 text-sm font-medium"
-                    >
-                      Cancel booking
-                    </button>
+                    {showCancelConfirm ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-[#757575]">Cancel booking?</span>
+                        <button
+                          onClick={handleCancel}
+                          disabled={actionLoading}
+                          className="px-4 py-2.5 bg-red-500 text-white rounded-xl text-sm font-semibold hover:bg-red-600 disabled:opacity-50"
+                        >
+                          Yes, cancel
+                        </button>
+                        <button
+                          onClick={() => setShowCancelConfirm(false)}
+                          disabled={actionLoading}
+                          className="px-4 py-2.5 border border-gray-200 text-[#4a4a4a] rounded-xl text-sm hover:bg-gray-50"
+                        >
+                          Keep
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setShowCancelConfirm(true)}
+                        disabled={actionLoading}
+                        className="px-5 py-3 border border-gray-200 text-[#4a4a4a] rounded-xl hover:bg-gray-50 text-sm font-medium"
+                      >
+                        Cancel booking
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
@@ -505,14 +528,16 @@ export default function BookingDetail() {
                       {actionLoading ? 'Opening payment…' : `Pay ₹${booking.amount?.toLocaleString()}`}
                     </button>
 
-                    {/* Mock confirm (dev) */}
-                    <button
-                      onClick={handleMockConfirm}
-                      disabled={actionLoading}
-                      className="w-full mt-3 py-2.5 border border-dashed border-gray-300 text-[#757575] rounded-xl text-xs hover:border-gray-400 hover:text-[#4a4a4a] transition-colors"
-                    >
-                      🛠 Skip payment — dev/demo only
-                    </button>
+                    {/* Mock confirm — dev builds only, stripped from prod bundle */}
+                    {import.meta.env.DEV && (
+                      <button
+                        onClick={handleMockConfirm}
+                        disabled={actionLoading}
+                        className="w-full mt-3 py-2.5 border border-dashed border-gray-300 text-[#757575] rounded-xl text-xs hover:border-gray-400 hover:text-[#4a4a4a] transition-colors"
+                      >
+                        🛠 Skip payment — dev/demo only
+                      </button>
+                    )}
                   </div>
                 </div>
               )}

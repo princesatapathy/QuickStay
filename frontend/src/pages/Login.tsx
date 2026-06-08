@@ -3,7 +3,8 @@ import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { login } from '../api/auth';
 import { useAuth } from '../context/AuthContext';
 import { getProfile } from '../api/users';
-import { Mail, Lock, BedDouble } from 'lucide-react';
+import { Mail, Lock, BedDouble, Eye, EyeOff } from 'lucide-react';
+import { setAccessToken } from '../api/client';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -11,6 +12,7 @@ export default function Login() {
   const { setUser } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -23,7 +25,7 @@ export default function Login() {
       const res = await login({ email, password });
       const token = res.data?.data?.accessToken;
       if (token) {
-        localStorage.setItem('accessToken', token);
+        setAccessToken(token);
         const profileRes = await getProfile();
         setUser(profileRes.data?.data);
         navigate(redirect, { replace: true });
@@ -87,7 +89,7 @@ export default function Login() {
                 <Mail size={16} className="text-gray-400 shrink-0" />
                 <input
                   type="email" value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => { setEmail(e.target.value); setError(''); }}
                   placeholder="you@example.com" required
                   className="flex-1 outline-none text-sm text-gray-800 placeholder-gray-400 bg-transparent"
                 />
@@ -99,11 +101,15 @@ export default function Login() {
               <div className="flex items-center gap-2 border border-gray-200 rounded-xl px-4 py-3 focus-within:border-gray-400 focus-within:ring-1 focus-within:ring-gray-200 transition-all">
                 <Lock size={16} className="text-gray-400 shrink-0" />
                 <input
-                  type="password" value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  type={showPassword ? 'text' : 'password'} value={password}
+                  onChange={(e) => { setPassword(e.target.value); setError(''); }}
                   placeholder="••••••••" required
                   className="flex-1 outline-none text-sm text-gray-800 bg-transparent"
                 />
+                <button type="button" onClick={() => setShowPassword((v) => !v)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors shrink-0">
+                  {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
               </div>
             </div>
 

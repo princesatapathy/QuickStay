@@ -1,6 +1,8 @@
+import axios from 'axios';
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { getProfile } from '../api/users';
 import { logout as logoutRequest } from '../api/auth';
+import { setAccessToken } from '../api/client';
 
 interface User {
   id: number;
@@ -30,20 +32,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      getProfile()
-        .then((res) => setUser(res.data?.data))
-        .catch(() => localStorage.removeItem('accessToken'))
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
-    }
+    const base = import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
+    axios.post(`${base}/auth/refresh`, {}, { withCredentials: true })
+      .then((resp) => {
+        const token = resp.data?.data?.accessToken;
+        if (token) {
+          setAccessToken(token);
+          return getProfile();
+        }
+        return null;
+      })
+      .then((res) => { if (res) setUser(res.data?.data); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   const logout = () => {
     void logoutRequest().catch(() => {});
-    localStorage.removeItem('accessToken');
+    setAccessToken(null);
     setUser(null);
   };
 

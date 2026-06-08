@@ -63,12 +63,15 @@ export default function Profile() {
   const [loading,     setLoading]     = useState(true);
   const [bookingFilter, setBookingFilter] = useState<BookingFilter>('all');
   const [cancellingId,  setCancellingId]  = useState<number | null>(null);
+  const [guestError,    setGuestError]    = useState('');
 
   const [guestName,     setGuestName]     = useState('');
   const [guestGender,   setGuestGender]   = useState('MALE');
   const [guestAge,      setGuestAge]      = useState('');
   const [addingGuest,   setAddingGuest]   = useState(false);
   const [showGuestForm, setShowGuestForm] = useState(false);
+  const [showDeleteId,  setShowDeleteId]  = useState<number | null>(null);
+  const [showCancelId,  setShowCancelId]  = useState<number | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -82,31 +85,36 @@ export default function Profile() {
 
   const handleAddGuest = async (e: React.FormEvent) => {
     e.preventDefault();
-    setAddingGuest(true);
+    setAddingGuest(true); setGuestError('');
     try {
       await addGuest({ name: guestName, gender: guestGender, age: Number(guestAge) });
       const res = await getGuests();
       setGuests(res.data?.data ?? []);
       setGuestName(''); setGuestAge(''); setShowGuestForm(false);
-    } catch { /* ignore */ }
-    finally { setAddingGuest(false); }
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } } };
+      setGuestError(e.response?.data?.message ?? 'Failed to add guest');
+    } finally { setAddingGuest(false); }
   };
 
   const handleDeleteGuest = async (id: number) => {
-    if (!confirm('Remove this guest?')) return;
-    await deleteGuest(id).catch(() => {});
-    setGuests((g) => g.filter((x) => x.id !== id));
+    setGuestError('');
+    try {
+      await deleteGuest(id);
+      setGuests((g) => g.filter((x) => x.id !== id));
+    } catch {
+      setGuestError('Failed to remove guest');
+    } finally { setShowDeleteId(null); }
   };
 
   const handleCancel = async (e: React.MouseEvent, id: number) => {
     e.stopPropagation();
-    if (!confirm('Cancel this booking?')) return;
     setCancellingId(id);
     try {
       await cancelBooking(id);
       setBookings((prev) => prev.map((b) => b.id === id ? { ...b, bookingStatus: 'CANCELLED' } : b));
-    } catch { /* ignore */ }
-    finally { setCancellingId(null); }
+    } catch { /* booking cancel errors are non-critical */ }
+    finally { setCancellingId(null); setShowCancelId(null); }
   };
 
   if (authLoading) {
@@ -286,12 +294,26 @@ export default function Profile() {
                                     className="px-3 py-1.5 bg-[#ff385c] text-white rounded-lg text-xs font-semibold hover:bg-[#e21e4a] transition-colors">
                                     Continue
                                   </button>
-                                  <button
-                                    onClick={(e) => handleCancel(e, b.id)}
-                                    disabled={cancellingId === b.id}
-                                    className="px-3 py-1.5 border border-gray-200 text-gray-600 rounded-lg text-xs font-semibold hover:bg-gray-50 disabled:opacity-50 transition-colors">
-                                    {cancellingId === b.id ? '…' : 'Cancel'}
-                                  </button>
+                                  {showCancelId === b.id ? (
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-xs text-gray-500">Cancel?</span>
+                                      <button onClick={(e) => handleCancel(e, b.id)} disabled={cancellingId === b.id}
+                                        className="px-2 py-1.5 bg-red-500 text-white rounded-lg text-xs font-semibold hover:bg-red-600 disabled:opacity-50">
+                                        {cancellingId === b.id ? '…' : 'Yes'}
+                                      </button>
+                                      <button onClick={(e) => { e.stopPropagation(); setShowCancelId(null); }}
+                                        className="px-2 py-1.5 border border-gray-200 text-gray-500 rounded-lg text-xs hover:bg-gray-50">
+                                        No
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); setShowCancelId(b.id); }}
+                                      disabled={cancellingId === b.id}
+                                      className="px-3 py-1.5 border border-gray-200 text-gray-600 rounded-lg text-xs font-semibold hover:bg-gray-50 disabled:opacity-50 transition-colors">
+                                      Cancel
+                                    </button>
+                                  )}
                                 </>
                               )}
                               {isConfirmed && (
@@ -301,12 +323,26 @@ export default function Profile() {
                                     className="px-3 py-1.5 border border-gray-200 text-gray-700 rounded-lg text-xs font-semibold hover:bg-gray-50 transition-colors">
                                     View Details
                                   </button>
-                                  <button
-                                    onClick={(e) => handleCancel(e, b.id)}
-                                    disabled={cancellingId === b.id}
-                                    className="px-3 py-1.5 border border-gray-200 text-red-500 rounded-lg text-xs font-semibold hover:bg-red-50 disabled:opacity-50 transition-colors">
-                                    {cancellingId === b.id ? '…' : 'Cancel'}
-                                  </button>
+                                  {showCancelId === b.id ? (
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-xs text-gray-500">Cancel?</span>
+                                      <button onClick={(e) => handleCancel(e, b.id)} disabled={cancellingId === b.id}
+                                        className="px-2 py-1.5 bg-red-500 text-white rounded-lg text-xs font-semibold hover:bg-red-600 disabled:opacity-50">
+                                        {cancellingId === b.id ? '…' : 'Yes'}
+                                      </button>
+                                      <button onClick={(e) => { e.stopPropagation(); setShowCancelId(null); }}
+                                        className="px-2 py-1.5 border border-gray-200 text-gray-500 rounded-lg text-xs hover:bg-gray-50">
+                                        No
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); setShowCancelId(b.id); }}
+                                      disabled={cancellingId === b.id}
+                                      className="px-3 py-1.5 border border-gray-200 text-red-500 rounded-lg text-xs font-semibold hover:bg-red-50 disabled:opacity-50 transition-colors">
+                                      Cancel
+                                    </button>
+                                  )}
                                 </>
                               )}
                               {isCancelled && (
@@ -329,6 +365,11 @@ export default function Profile() {
         ) : (
           /* ── Guests tab ──────────────────────────────────────── */
           <div>
+            {guestError && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-4 text-sm">
+                {guestError}
+              </div>
+            )}
             <div className="space-y-3 mb-4">
               {guests.length === 0 && !showGuestForm ? (
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
@@ -346,10 +387,24 @@ export default function Profile() {
                       <p className="text-xs text-gray-400 mt-0.5">{g.gender} · Age {g.age}</p>
                     </div>
                   </div>
-                  <button onClick={() => handleDeleteGuest(g.id)}
-                    className="p-2 text-gray-300 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50">
-                    <Trash2 size={15} />
-                  </button>
+                  {showDeleteId === g.id ? (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs text-gray-500">Remove?</span>
+                      <button onClick={() => handleDeleteGuest(g.id)}
+                        className="px-2.5 py-1 bg-red-500 text-white rounded-lg text-xs font-semibold hover:bg-red-600">
+                        Yes
+                      </button>
+                      <button onClick={() => setShowDeleteId(null)}
+                        className="px-2.5 py-1 border border-gray-200 text-gray-500 rounded-lg text-xs hover:bg-gray-50">
+                        No
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setShowDeleteId(g.id)}
+                      className="p-2 text-gray-300 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50">
+                      <Trash2 size={15} />
+                    </button>
+                  )}
                 </div>
               ))}
             </div>

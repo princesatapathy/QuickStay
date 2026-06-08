@@ -88,7 +88,13 @@ export default function Search() {
         setHotels(mapped);
         setTotalPages(data?.totalPages ?? 0);
       })
-      .catch((err) => setError(err.response?.data?.message || 'Failed to load hotels'))
+      .catch((err) => {
+        if (err.response?.status === 401) {
+          navigate('/login?redirect=' + encodeURIComponent(window.location.pathname + window.location.search));
+        } else {
+          setError(err.response?.data?.message || 'Failed to load hotels');
+        }
+      })
       .finally(() => setLoading(false));
   }, [city, checkIn, checkOut, rooms, page]);
 
@@ -97,17 +103,26 @@ export default function Search() {
     let list = [...hotels];
 
     if (selectedPriceRange.length > 0) {
-      list = list.filter((h) => {
-        const range = PRICE_RANGES.find((r) => selectedPriceRange.includes(r.label));
-        return range ? h.price >= range.min && h.price <= range.max : true;
-      });
+      const activeRanges = PRICE_RANGES.filter((r) => selectedPriceRange.includes(r.label));
+      list = list.filter((h) =>
+        activeRanges.some((r) => h.price >= r.min && h.price <= r.max),
+      );
+    }
+
+    if (selectedRoomTypes.length > 0) {
+      list = list.filter((h) =>
+        selectedRoomTypes.some((t) =>
+          h.amenities?.some((a) => a.toLowerCase().includes(t.toLowerCase())) ||
+          (h as unknown as { type?: string }).type === t,
+        ),
+      );
     }
 
     if (sortBy === 'priceLow')  list.sort((a, b) => a.price - b.price);
     if (sortBy === 'priceHigh') list.sort((a, b) => b.price - a.price);
 
     return list;
-  }, [hotels, selectedPriceRange, sortBy]);
+  }, [hotels, selectedPriceRange, selectedRoomTypes, sortBy]);
 
   const nights = checkIn && checkOut
     ? Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000)
@@ -130,7 +145,7 @@ export default function Search() {
         </h1>
         <p className="text-gray-500 text-sm">
           {checkIn && checkOut
-            ? `${checkIn} → ${checkOut} · ${rooms} room${rooms > 1 ? 's' : ''}`
+            ? `${new Date(checkIn).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} → ${new Date(checkOut).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} · ${rooms} room${rooms > 1 ? 's' : ''}`
             : 'Browse our handpicked selection of exceptional hotels worldwide.'}
         </p>
       </div>
@@ -154,9 +169,16 @@ export default function Search() {
               ))}
             </div>
           ) : error ? (
-            <div className="text-center py-20">
-              <p className="text-gray-400 mb-4">{error}</p>
-              <button onClick={() => navigate('/')} className="text-gray-600 underline text-sm">← Go back</button>
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <p className="text-gray-500 text-base text-center max-w-sm">
+                Sign in to browse available hotels and make bookings.
+              </p>
+              <button
+                onClick={() => navigate('/login?redirect=' + encodeURIComponent(window.location.pathname + window.location.search))}
+                className="px-8 py-3 rounded-full bg-[#ff385c] text-white font-semibold text-sm hover:bg-[#e21e4a] transition-colors shadow-md"
+              >
+                Sign in
+              </button>
             </div>
           ) : filtered.length === 0 ? (
             <div className="text-center py-20">

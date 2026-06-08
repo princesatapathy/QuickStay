@@ -11,11 +11,11 @@ jobs:
     steps:
       - name: Ping backend health
         run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 \
-            https://quickstay-5ro8.onrender.com/api/v1/actuator/health)
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 90 \
+            https://quickstay-5ro8.onrender.com/api/v1/actuator/health) || true
           echo "Health check status: $STATUS"
-          if [ "$STATUS" != "200" ]; then
-            echo "Backend returned $STATUS — may be waking up"
-          else
+          if [ "$STATUS" = "200" ]; then
             echo "Backend is UP"
+          else
+            echo "Backend returned '$STATUS' — cold start may take 60-90s, next ping will retry"
           fi

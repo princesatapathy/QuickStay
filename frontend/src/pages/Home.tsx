@@ -65,14 +65,14 @@ const TESTIMONIALS = [
     name: 'Liam Johnson',
     rating: 4,
     avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&q=80',
-    text: "I've used many booking platforms before, but none compare to the personalized experience and attention to detail that QuickStay provides. Their service is truly world-class.",
+    text: "Booked three times now — the process is seamless and the hotels always exceed expectations. Real-time pricing is transparent and fair. Will definitely keep coming back.",
   },
   {
     id: 3,
     name: 'Sophia Lee',
-    rating: 4,
+    rating: 5,
     avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=80&q=80',
-    text: "I've used many booking platforms before, but none compare to the personalized experience and attention to detail that QuickStay provides. Their service is truly world-class.",
+    text: "From search to checkout, everything just works. Found a stunning property in Goa for a fraction of what I expected. QuickStay has completely changed how I travel.",
   },
 ];
 
@@ -95,64 +95,54 @@ function HeroSearch() {
   return (
     <form
       onSubmit={handleSearch}
-      className="bg-white rounded-full shadow-2xl w-full flex flex-col sm:flex-row items-stretch sm:items-center overflow-hidden p-2 gap-1"
+      className="bg-white rounded-2xl sm:rounded-full shadow-2xl w-full overflow-hidden p-2 flex flex-col sm:flex-row sm:items-center gap-1"
     >
-      {/* Destination */}
-      <div className="flex-[1.5] flex flex-col px-6 py-3 min-w-0 border-b sm:border-b-0 sm:border-r border-gray-200">
+      {/* Destination — full row on mobile */}
+      <div className="flex-[1.5] flex flex-col px-5 py-3 min-w-0 border-b border-gray-100 sm:border-b-0 sm:border-r">
         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Where</label>
         <input
-          type="text"
-          value={city}
+          type="text" value={city}
           onChange={(e) => setCity(e.target.value)}
           placeholder="Search destinations"
           className="text-sm font-medium text-gray-700 outline-none placeholder-gray-400 bg-transparent mt-0.5"
         />
       </div>
 
-      {/* Check-in */}
-      <div className="flex flex-col px-6 py-3 border-b sm:border-b-0 sm:border-r border-gray-200 min-w-0">
-        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Check In</label>
-        <input
-          type="date"
-          value={checkIn}
-          min={format(addDays(today, 1), 'yyyy-MM-dd')}
-          onChange={(e) => setCheckIn(e.target.value)}
-          className="text-sm font-medium text-gray-700 outline-none bg-transparent mt-0.5"
-        />
+      {/* Dates — side-by-side on BOTH mobile and desktop */}
+      <div className="flex sm:contents border-b border-gray-100 sm:border-b-0">
+        <div className="flex-1 flex flex-col px-5 py-3 min-w-0 border-r border-gray-100 sm:border-r">
+          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Check In</label>
+          <input type="date" value={checkIn}
+            min={format(addDays(today, 1), 'yyyy-MM-dd')}
+            onChange={(e) => setCheckIn(e.target.value)}
+            className="text-sm font-medium text-gray-700 outline-none bg-transparent mt-0.5"
+          />
+        </div>
+        <div className="flex-1 flex flex-col px-5 py-3 min-w-0 sm:border-r border-gray-100">
+          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Check Out</label>
+          <input type="date" value={checkOut} min={checkIn}
+            onChange={(e) => setCheckOut(e.target.value)}
+            className="text-sm font-medium text-gray-700 outline-none bg-transparent mt-0.5"
+          />
+        </div>
       </div>
 
-      {/* Check-out */}
-      <div className="flex flex-col px-6 py-3 border-b sm:border-b-0 sm:border-r border-gray-200 min-w-0">
-        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Check Out</label>
-        <input
-          type="date"
-          value={checkOut}
-          min={checkIn}
-          onChange={(e) => setCheckOut(e.target.value)}
-          className="text-sm font-medium text-gray-700 outline-none bg-transparent mt-0.5"
-        />
+      {/* Rooms + button — side by side on mobile */}
+      <div className="flex items-center gap-2 p-1 sm:contents">
+        <div className="flex flex-col px-4 py-1 sm:px-5 sm:py-3 min-w-0 sm:border-r border-gray-100">
+          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Rooms</label>
+          <input type="number" min={1} max={10} value={guests}
+            onChange={(e) => setGuests(Number(e.target.value))}
+            className="text-sm font-medium text-gray-700 outline-none w-10 bg-transparent mt-0.5"
+          />
+        </div>
+        <button type="submit"
+          className="flex-1 sm:flex-none sm:w-14 sm:h-14 py-3 sm:py-0 rounded-xl sm:rounded-full bg-[#ff385c] text-white flex items-center justify-center gap-2 hover:bg-[#e21e4a] transition-colors shadow-lg font-semibold text-sm"
+        >
+          <Search size={18} />
+          <span className="sm:hidden">Search</span>
+        </button>
       </div>
-
-      {/* Rooms */}
-      <div className="flex flex-col px-6 py-3 min-w-0">
-        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Rooms</label>
-        <input
-          type="number"
-          min={1}
-          max={10}
-          value={guests}
-          onChange={(e) => setGuests(Number(e.target.value))}
-          className="text-sm font-medium text-gray-700 outline-none w-10 bg-transparent mt-0.5"
-        />
-      </div>
-
-      {/* Search button — circular */}
-      <button
-        type="submit"
-        className="shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-[#ff385c] text-white flex items-center justify-center hover:bg-[#e21e4a] transition-colors shadow-lg ml-auto sm:ml-0"
-      >
-        <Search size={20} />
-      </button>
     </form>
   );
 }
@@ -253,12 +243,15 @@ export default function Home() {
 
   const [hotels, setHotels] = useState<FeaturedHotel[]>([]);
   const [loadingHotels, setLoadingHotels] = useState(true);
+  const [hotelLoadError, setHotelLoadError] = useState(false);
 
   // Try to load featured hotels from a popular city
   useEffect(() => {
     const cities = ['Mumbai', 'Delhi', 'Goa', 'Bangalore'];
+    let errorCount = 0;
     const tryNext = (idx: number) => {
       if (idx >= cities.length) {
+        if (errorCount === cities.length) setHotelLoadError(true);
         setLoadingHotels(false);
         return;
       }
@@ -281,7 +274,7 @@ export default function Home() {
             tryNext(idx + 1);
           }
         })
-        .catch(() => tryNext(idx + 1));
+        .catch(() => { errorCount++; tryNext(idx + 1); });
     };
     tryNext(0);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -291,7 +284,7 @@ export default function Home() {
       {/* ──────────────────────────────────────────────────────
           HERO — full viewport height, photo background
       ─────────────────────────────────────────────────────── */}
-      <section className="relative min-h-[820px] flex flex-col items-center justify-center overflow-hidden pt-16">
+      <section className="relative min-h-[820px] flex flex-col items-center justify-center overflow-hidden">
         {/* Background photo */}
         <div
           className="absolute inset-0 bg-cover bg-center"
@@ -327,7 +320,7 @@ export default function Home() {
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
             Featured Destination
           </h2>
-          <p className="text-gray-500 max-w-xl mx-auto text-sm sm:text-base leading-relaxed text-center">
+          <p className="max-w-xl mx-auto text-sm sm:text-base leading-relaxed text-center bg-gradient-to-b from-gray-400 to-amber-700 bg-clip-text text-transparent">
             Discover our handpicked selection of exceptional properties around the world, offering
             unparalleled luxury and unforgettable experiences.
           </p>
@@ -345,6 +338,19 @@ export default function Home() {
             {hotels.map((hotel, idx) => (
               <HotelCard key={hotel.id} hotel={hotel} checkIn={checkIn} checkOut={checkOut} index={idx} />
             ))}
+          </div>
+        ) : hotelLoadError ? (
+          /* All city fetches failed — prompt sign in */
+          <div className="flex flex-col items-center justify-center py-16 gap-5">
+            <p className="text-gray-500 text-base text-center max-w-sm">
+              We couldn't load hotels right now. Sign in to browse available stays.
+            </p>
+            <button
+              onClick={() => navigate('/login')}
+              className="px-8 py-3 rounded-full bg-[#ff385c] text-white font-semibold text-sm hover:bg-[#e21e4a] transition-colors shadow-md"
+            >
+              Sign in
+            </button>
           </div>
         ) : (
           /* No hotels in DB yet — show placeholder cards */
@@ -379,7 +385,7 @@ export default function Home() {
                   </p>
                   <div className="flex items-center justify-between">
                     <div>
-                      <span className="font-bold text-gray-900">${[399, 299, 249][idx]}</span>
+                      <span className="font-bold text-gray-900">₹{[399, 299, 249][idx]}</span>
                       <span className="text-xs text-gray-400">/night</span>
                     </div>
                     <button
@@ -536,7 +542,7 @@ export default function Home() {
                 placeholder="Enter your email"
                 className="flex-1 bg-transparent border border-gray-600 text-white rounded-xl px-5 py-3 text-sm outline-none focus:border-gray-400 placeholder-gray-500"
               />
-              <button className="flex items-center justify-center gap-2 px-7 py-3 bg-[#ff385c] text-white rounded-xl font-semibold text-sm hover:bg-[#e21e4a] transition-colors whitespace-nowrap border border-gray-700">
+              <button className="flex items-center justify-center gap-2 px-7 py-3 bg-[#ff385c] text-white rounded-xl font-semibold text-sm hover:bg-[#e21e4a] transition-colors whitespace-nowrap">
                 Subscribe <ArrowRight size={15} />
               </button>
             </div>

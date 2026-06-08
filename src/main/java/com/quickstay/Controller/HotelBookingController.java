@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -54,6 +55,7 @@ public class HotelBookingController {
         return ResponseEntity.noContent().build();
     }
 
+    @Profile("dev")
     @PostMapping("/{bookingId}/mock-confirm")
     @Operation(summary = "Mock-confirm booking without payment (dev/demo only)", tags = {"Booking Flow"})
     public ResponseEntity<BookingDTO> mockConfirm(@PathVariable Long bookingId) {

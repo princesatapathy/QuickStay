@@ -3,7 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { signup, signupManager, login } from '../api/auth';
 import { useAuth } from '../context/AuthContext';
 import { getProfile } from '../api/users';
-import { Mail, Lock, User, BedDouble, KeyRound } from 'lucide-react';
+import { Mail, Lock, User, BedDouble, KeyRound, Eye, EyeOff } from 'lucide-react';
+import { setAccessToken } from '../api/client';
 
 export default function Register() {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ export default function Register() {
   const [password, setPassword] = useState('');
   const [accountType, setAccountType] = useState<'guest' | 'manager'>('guest');
   const [managerCode, setManagerCode] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -28,7 +30,7 @@ export default function Register() {
       const loginRes = await login({ email, password });
       const token = loginRes.data?.data?.accessToken;
       if (token) {
-        localStorage.setItem('accessToken', token);
+        setAccessToken(token);
         const profileRes = await getProfile();
         const profile = profileRes.data?.data;
         setUser(profile);
@@ -111,7 +113,7 @@ export default function Register() {
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Full Name</label>
               <div className={inp}>
                 <User size={16} className="text-gray-400 shrink-0" />
-                <input type="text" value={name} onChange={(e) => setName(e.target.value)}
+                <input type="text" value={name} onChange={(e) => { setName(e.target.value); setError(''); }}
                   placeholder="John Doe" required
                   className="flex-1 outline-none text-sm text-gray-800 placeholder-gray-400 bg-transparent" />
               </div>
@@ -131,9 +133,14 @@ export default function Register() {
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
               <div className={inp}>
                 <Lock size={16} className="text-gray-400 shrink-0" />
-                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+                <input type={showPassword ? 'text' : 'password'} value={password}
+                  onChange={(e) => { setPassword(e.target.value); setError(''); }}
                   placeholder="Min 8 characters" minLength={8} required
                   className="flex-1 outline-none text-sm text-gray-800 bg-transparent" />
+                <button type="button" onClick={() => setShowPassword((v) => !v)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors shrink-0">
+                  {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
               </div>
             </div>
 

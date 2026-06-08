@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Menu, X, BedDouble } from 'lucide-react';
 
 export default function Navbar() {
   const { user, isManager } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const scrollTo = (id: string) => {
@@ -20,10 +21,10 @@ export default function Navbar() {
   };
 
   const NAV_LINKS = [
-    { label: 'Home',       action: () => { setMobileOpen(false); navigate('/'); } },
-    { label: 'Hotels',     action: () => { setMobileOpen(false); navigate('/search'); } },
-    { label: 'Experience', action: () => scrollTo('experience') },
-    { label: 'About',      action: () => scrollTo('about') },
+    { label: 'Home',       path: '/',       action: () => { setMobileOpen(false); navigate('/'); } },
+    { label: 'Hotels',     path: '/search', action: () => { setMobileOpen(false); navigate('/search'); } },
+    { label: 'Experience', path: null,      action: () => scrollTo('experience') },
+    { label: 'About',      path: null,      action: () => scrollTo('about') },
   ];
 
   return (
@@ -37,12 +38,15 @@ export default function Navbar() {
 
         {/* ── Desktop nav ───────────────────────────────── */}
         <div className="hidden md:flex items-center gap-8 text-sm font-semibold text-gray-500">
-          {NAV_LINKS.map(({ label, action }) => (
-            <button key={label} onClick={action}
-              className="hover:text-[#ff385c] transition-colors bg-transparent border-none cursor-pointer font-semibold text-sm">
-              {label}
-            </button>
-          ))}
+          {NAV_LINKS.map(({ label, path, action }) => {
+            const active = path !== null && location.pathname === path;
+            return (
+              <button key={label} onClick={action}
+                className={`transition-colors bg-transparent border-none cursor-pointer font-semibold text-sm ${active ? 'text-[#ff385c]' : 'hover:text-[#ff385c]'}`}>
+                {label}
+              </button>
+            );
+          })}
           {user && isManager && (
             <Link to="/admin"
               className="px-4 py-1.5 rounded-full border border-[#ff385c] text-[#ff385c] text-sm font-semibold hover:bg-[#ffe4e8] transition-colors">
@@ -71,14 +75,6 @@ export default function Navbar() {
             </div>
           )}
 
-          {/* Mobile login shortcut (not logged in) */}
-          {!user && (
-            <Link to="/login"
-              className="md:hidden px-4 py-2 rounded-full bg-[#ff385c] text-white text-sm font-semibold hover:bg-[#e21e4a] transition-colors">
-              Login
-            </Link>
-          )}
-
           {/* Hamburger */}
           <button
             onClick={() => setMobileOpen((v) => !v)}
@@ -105,12 +101,15 @@ export default function Navbar() {
               </button>
             </div>
             <nav className="flex-1 px-4 py-6 space-y-1">
-              {NAV_LINKS.map(({ label, action }) => (
-                <button key={label} onClick={action}
-                  className="w-full text-left px-4 py-3 rounded-xl text-gray-700 font-semibold text-sm hover:bg-[#ffe4e8] hover:text-[#ff385c] transition-colors">
-                  {label}
-                </button>
-              ))}
+              {NAV_LINKS.map(({ label, path, action }) => {
+                const active = path !== null && location.pathname === path;
+                return (
+                  <button key={label} onClick={action}
+                    className={`w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition-colors ${active ? 'bg-[#ffe4e8] text-[#ff385c]' : 'text-gray-700 hover:bg-[#ffe4e8] hover:text-[#ff385c]'}`}>
+                    {label}
+                  </button>
+                );
+              })}
               {user && isManager && (
                 <Link to="/admin" onClick={() => setMobileOpen(false)}
                   className="block px-4 py-3 rounded-xl text-[#ff385c] font-semibold text-sm hover:bg-[#ffe4e8] transition-colors">
