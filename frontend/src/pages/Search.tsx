@@ -170,14 +170,12 @@ export default function Search() {
             </div>
           ) : error ? (
             <div className="flex flex-col items-center justify-center py-20 gap-4">
-              <p className="text-gray-500 text-base text-center max-w-sm">
-                Sign in to browse available hotels and make bookings.
-              </p>
+              <p className="text-gray-500 text-base text-center max-w-sm">{error}</p>
               <button
-                onClick={() => navigate('/login?redirect=' + encodeURIComponent(window.location.pathname + window.location.search))}
+                onClick={() => window.location.reload()}
                 className="px-8 py-3 rounded-full bg-[#ff385c] text-white font-semibold text-sm hover:bg-[#e21e4a] transition-colors shadow-md"
               >
-                Sign in
+                Try again
               </button>
             </div>
           ) : filtered.length === 0 ? (
