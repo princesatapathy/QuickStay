@@ -320,9 +320,9 @@ export default function Home() {
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
             Featured Destination
           </h2>
-          <p className="max-w-xl mx-auto text-sm sm:text-base leading-relaxed text-center bg-gradient-to-b from-gray-400 to-amber-700 bg-clip-text text-transparent">
-            Discover our handpicked selection of exceptional properties around the world, offering
-            unparalleled luxury and unforgettable experiences.
+          <p className="mx-auto w-full max-w-4xl text-sm sm:text-base leading-relaxed text-center bg-gradient-to-b from-gray-400 to-amber-700 bg-clip-text text-transparent">
+            Discover our handpicked selection of exceptional properties around the world, offering unparalleled luxury
+            and unforgettable experiences.
           </p>
         </div>
 
@@ -340,16 +340,16 @@ export default function Home() {
             ))}
           </div>
         ) : hotelLoadError ? (
-          /* All city fetches failed — prompt sign in */
+          /* All city fetches failed */
           <div className="flex flex-col items-center justify-center py-16 gap-5">
             <p className="text-gray-500 text-base text-center max-w-sm">
-              We couldn't load hotels right now. Sign in to browse available stays.
+              Couldn't load hotels right now. Please try again later.
             </p>
             <button
-              onClick={() => navigate('/login')}
+              onClick={() => window.location.reload()}
               className="px-8 py-3 rounded-full bg-[#ff385c] text-white font-semibold text-sm hover:bg-[#e21e4a] transition-colors shadow-md"
             >
-              Sign in
+              Try again
             </button>
           </div>
         ) : (
