@@ -18,7 +18,10 @@ ENV SPRING_PROFILES_ACTIVE=prod
 ENV JAVA_OPTS=""
 
 COPY --from=build /workspace/target/*.jar /app/app.jar
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+
+RUN chmod +x /app/docker-entrypoint.sh
 
 EXPOSE 8080
 
-CMD ["sh", "-c", "if [ -n \"$DATABASE_URL\" ] && [ -z \"$SPRING_DATASOURCE_URL\" ]; then DB_NO_PROTO=\"${DATABASE_URL#postgresql://}\"; DB_HOST_PATH=\"${DB_NO_PROTO#*@}\"; export SPRING_DATASOURCE_URL=\"jdbc:postgresql://${DB_HOST_PATH}\"; fi; java $JAVA_OPTS -jar /app/app.jar"]
+CMD ["/app/docker-entrypoint.sh"]
