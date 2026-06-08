@@ -23,4 +23,14 @@ if [ -n "${DATABASE_URL:-}" ]; then
   fi
 fi
 
+if [ -n "${SPRING_DATASOURCE_URL:-}" ]; then
+  spring_db_no_proto="${SPRING_DATASOURCE_URL#postgresql://}"
+  spring_db_no_proto="${spring_db_no_proto#postgres://}"
+
+  if [ "$spring_db_no_proto" != "$SPRING_DATASOURCE_URL" ]; then
+    spring_db_host_path="${spring_db_no_proto#*@}"
+    export SPRING_DATASOURCE_URL="jdbc:postgresql://${spring_db_host_path}"
+  fi
+fi
+
 exec java ${JAVA_OPTS:-} -jar /app/app.jar
