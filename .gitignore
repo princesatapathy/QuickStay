@@ -58,3 +58,11 @@ ss-all.js
 
 ### Claude instructions ###
 CLAUDE.md
+
+# Local secrets, logs and scratch output (never commit)
+.env
+.env.local
+*.log
+*.err
+hs_err_pid*.log
+/*.png

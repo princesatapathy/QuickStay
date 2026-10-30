@@ -1,16 +1,18 @@
-import { useEffect, useState, useRef } from 'react';
-import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { ArrowLeft, Bed, Envelope, MapPin, Phone, Users } from '@phosphor-icons/react';
+import { format, addDays } from 'date-fns';
 import { getHotelInfo } from '../api/hotels';
 import { initBooking } from '../api/bookings';
 import { useAuth } from '../context/AuthContext';
-import {
-  MapPin, Phone, Mail, Wifi, Car, Coffee, Dumbbell,
-  BedDouble, ArrowLeft, Shield, Star, Home, CheckCircle,
-  BellRing, Mountain, Waves,
-} from 'lucide-react';
-import { format, addDays } from 'date-fns';
+import { HOTEL_IMGS, hotelImage } from '../lib/images';
+import { fmtDate, inr, nights as nightsBetween } from '../lib/dates';
+import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Form';
+import { Banner, Card, EmptyState, Skeleton, Stars } from '../components/ui/Display';
+import { AmenityChip } from '../components/ui/Amenity';
+import { CountUp, Reveal } from '../components/motion/Motion';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 interface Room {
   id: number;
   type: string;
@@ -30,33 +32,6 @@ interface Hotel {
   contactInfo: { address?: string; phoneNumber?: string; email?: string };
 }
 
-// ─── Amenity icon map ─────────────────────────────────────────────────────────
-const AMENITY_ICONS: Record<string, React.ReactNode> = {
-  WiFi:          <Wifi      size={15} />,
-  Parking:       <Car       size={15} />,
-  Breakfast:     <Coffee    size={15} />,
-  Gym:           <Dumbbell  size={15} />,
-  'Room Service': <BellRing  size={15} />,
-  'Mountain View': <Mountain  size={15} />,
-  Pool:          <Waves     size={15} />,
-};
-
-// ─── Static hotel gallery images (Unsplash luxury rooms) ─────────────────────
-const GALLERY_IMGS = [
-  'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&q=80',
-  'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=600&q=80',
-  'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=600&q=80',
-];
-
-// ─── Feature highlights (static) ─────────────────────────────────────────────
-const FEATURES = [
-  { icon: <Home      size={18} />, title: 'Clean & Safe Stay',        desc: 'A well-maintained and hygienic space just for you.' },
-  { icon: <Shield    size={18} />, title: 'Enhanced Standards',        desc: "This hotel meets QuickStay's enhanced cleanliness standards." },
-  { icon: <MapPin    size={18} />, title: 'Excellent Location',        desc: '90% of guests rated the location 5 stars.' },
-  { icon: <CheckCircle size={18} />, title: 'Smooth Check-In',         desc: '100% of guests gave check-in a 5-star rating.' },
-];
-
-// ─── Main ─────────────────────────────────────────────────────────────────────
 export default function HotelDetail() {
   const { hotelId } = useParams<{ hotelId: string }>();
   const [searchParams] = useSearchParams();
@@ -65,19 +40,17 @@ export default function HotelDetail() {
   const roomsRef = useRef<HTMLDivElement>(null);
 
   const today = new Date();
-  const [checkIn,  setCheckIn]  = useState(searchParams.get('checkIn')  || format(addDays(today, 1), 'yyyy-MM-dd'));
+  const [checkIn, setCheckIn] = useState(searchParams.get('checkIn') || format(addDays(today, 1), 'yyyy-MM-dd'));
   const [checkOut, setCheckOut] = useState(searchParams.get('checkOut') || format(addDays(today, 3), 'yyyy-MM-dd'));
-  const [guests,   setGuests]   = useState(Number(searchParams.get('rooms') || 1));
+  const [guests, setGuests] = useState(Number(searchParams.get('rooms') || 1));
 
-  const [hotel,       setHotel]       = useState<Hotel | null>(null);
-  const [roomList,    setRoomList]    = useState<Room[]>([]);
-  const [loading,        setLoading]        = useState(true);
-  const [bookingRoomId,  setBookingRoomId]  = useState<number | null>(null);
-  const [error,          setError]          = useState('');
+  const [hotel, setHotel] = useState<Hotel | null>(null);
+  const [roomList, setRoomList] = useState<Room[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [bookingRoomId, setBookingRoomId] = useState<number | null>(null);
+  const [error, setError] = useState('');
 
-  const nights = Math.max(1,
-    Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000),
-  );
+  const nights = nightsBetween(checkIn, checkOut);
 
   useEffect(() => {
     if (!hotelId) return;
@@ -91,22 +64,15 @@ export default function HotelDetail() {
       .finally(() => setLoading(false));
   }, [hotelId]);
 
-  const handleCheckAvailability = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Scroll to rooms section
-    roomsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
-
   const handleBook = async (roomId: number) => {
     if (!user) {
-      navigate(`/login?redirect=/hotels/${hotelId}?checkIn=${checkIn}&checkOut=${checkOut}&rooms=${guests}`);
+      navigate(`/login?redirect=${encodeURIComponent(`/hotels/${hotelId}?checkIn=${checkIn}&checkOut=${checkOut}&rooms=${guests}`)}`);
       return;
     }
-    setBookingRoomId(roomId); setError('');
+    setBookingRoomId(roomId);
+    setError('');
     try {
-      const res = await initBooking({
-        hotelId: Number(hotelId), roomId, checkInDate: checkIn, checkOutDate: checkOut, roomsCount: guests,
-      });
+      const res = await initBooking({ hotelId: Number(hotelId), roomId, checkInDate: checkIn, checkOutDate: checkOut, roomsCount: guests });
       navigate(`/booking/${res.data?.data?.id}`);
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
@@ -118,233 +84,141 @@ export default function HotelDetail() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#ff385c] border-t-transparent" />
+      <div className="mx-auto max-w-6xl space-y-6 px-5 sm:px-8">
+        <Skeleton className="h-72 w-full rounded-xl sm:h-96" />
+        <Skeleton className="h-8 w-1/2" />
+        <Skeleton className="h-40 w-full rounded-xl" />
       </div>
     );
   }
 
   if (!hotel) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-        <p className="text-gray-500">Hotel not found</p>
-        <button onClick={() => navigate(-1)} className="text-gray-600 underline text-sm">← Go back</button>
+      <div className="mx-auto max-w-6xl px-5 sm:px-8">
+        <Card>
+          <EmptyState
+            icon={<Bed size={26} />}
+            title={error || 'Hotel not found'}
+            action={<Button variant="ghost" onClick={() => navigate(-1)}>Go back</Button>}
+          />
+        </Card>
       </div>
     );
   }
 
-  const minPrice = roomList.length > 0 ? Math.min(...roomList.map((r) => r.basePrice)) : 0;
-  const allAmenities = [...new Set(roomList.flatMap((r) => r.amenities ?? []))].slice(0, 5);
+  const minPrice = roomList.length ? Math.min(...roomList.map((r) => r.basePrice)) : 0;
+  const allAmenities = [...new Set(roomList.flatMap((r) => r.amenities ?? []))].slice(0, 8);
+  const photos = (hotel.photos?.length >= 3 ? hotel.photos : HOTEL_IMGS).slice(0, 3);
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Back */}
-      <div className="border-b border-gray-100 py-3 px-6 sm:px-12">
-        <div className="max-w-7xl mx-auto">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-gray-500 hover:text-gray-800 text-sm transition-colors"
-          >
-            <ArrowLeft size={16} /> Back to results
-          </button>
-        </div>
+    <div className="mx-auto max-w-6xl px-5 pb-16 sm:px-8">
+      <button onClick={() => navigate(-1)} className="mb-4 inline-flex items-center gap-2 text-sm text-ink-muted transition-colors hover:text-ink">
+        <ArrowLeft size={16} /> Back to results
+      </button>
+
+      {/* Mosaic: one hero photo and two supporting */}
+      <div className="grid h-64 grid-cols-3 grid-rows-2 gap-2 overflow-hidden rounded-xl sm:h-96 sm:gap-3">
+        {photos.map((src, i) => (
+          <div key={i} className={`overflow-hidden bg-surface ${i === 0 ? 'col-span-2 row-span-2' : ''}`}>
+            <img
+              src={src}
+              alt={`${hotel.name} photo ${i + 1}`}
+              className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
+              onError={(e) => { (e.target as HTMLImageElement).src = HOTEL_IMGS[i % HOTEL_IMGS.length]; }}
+            />
+          </div>
+        ))}
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 sm:px-12 py-8">
-        {/* ── Image gallery ───────────────────────────────────────────────── */}
-        <div className="grid grid-cols-3 gap-3 mb-8 h-56 sm:h-72 rounded-2xl overflow-hidden">
-          {(hotel.photos?.length >= 3 ? hotel.photos : GALLERY_IMGS).slice(0, 3).map((src, i) => (
-            <div key={i} className={`overflow-hidden bg-gray-100 ${i === 0 ? 'col-span-1 row-span-1' : ''}`}>
-              <img
-                src={src}
-                alt={`${hotel.name} ${i + 1}`}
-                className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                onError={(e) => { (e.target as HTMLImageElement).src = GALLERY_IMGS[i % 3]; }}
-              />
-            </div>
-          ))}
-        </div>
+      <div className="mt-8 grid items-start gap-8 lg:grid-cols-[1fr_21rem]">
+        <div className="min-w-0">
+          <Stars value={hotel.starRating} />
+          <h1 className="t-h2 mt-2">{hotel.name}</h1>
+          <p className="mt-2 flex items-center gap-1.5 text-ink-muted">
+            <MapPin size={16} /> {hotel.contactInfo?.address || hotel.city}
+          </p>
 
-        {/* ── Hotel title + price ─────────────────────────────────────────── */}
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
-          <div>
-            <h1 className="font-bold text-2xl sm:text-3xl text-gray-900 mb-1">{hotel.name}</h1>
-            <p className="text-sm text-gray-400 italic mb-1">Experience Luxury Like Never Before</p>
-            <div className="flex items-center gap-2 mt-1">
-              <div className="flex gap-0.5">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} size={14}
-                    className={i < (hotel.starRating ?? 4) ? 'fill-orange-400 text-orange-400' : 'fill-gray-200 text-gray-200'} />
+          {allAmenities.length > 0 && (
+            <div className="mt-5 flex flex-wrap gap-2">
+              {allAmenities.map((a) => <AmenityChip key={a} name={a} />)}
+            </div>
+          )}
+
+          {error && <div className="mt-6"><Banner tone="error">{error}</Banner></div>}
+
+          <div ref={roomsRef} className="scroll-mt-28 pt-10">
+            <h2 className="t-h3">Available rooms</h2>
+            <p className="mt-1 text-sm text-ink-muted">
+              {fmtDate(checkIn, false)} to {fmtDate(checkOut)} · {nights} night{nights > 1 ? 's' : ''} · {guests} room{guests > 1 ? 's' : ''}
+            </p>
+
+            {roomList.length === 0 ? (
+              <Card className="mt-5">
+                <EmptyState icon={<Bed size={26} />} title="No rooms for these dates" body="Try different dates from the panel." />
+              </Card>
+            ) : (
+              <div className="mt-8 space-y-12">
+                {roomList.map((room, i) => (
+                  <Reveal key={room.id} delay={Math.min(i, 3) * 0.05}>
+                    {/* Editorial room row: photo left, serif name, small-caps meta, one action. */}
+                    <article className="grid items-center gap-6 md:grid-cols-[1.2fr_1fr] md:gap-10">
+                      <div className="overflow-hidden rounded-lg bg-surface-2">
+                        <img src={hotelImage(room.id, room.photos)} alt={`${room.type} room`} loading="lazy" className="aspect-[4/3] w-full object-cover" />
+                      </div>
+                      <div>
+                        <h3 className="t-h3 text-accent">{room.type}</h3>
+                        <p className="t-label mt-3 flex items-center gap-1.5"><Users size={14} /> Sleeps {room.capacity ?? 2}</p>
+                        {room.amenities?.length > 0 && (
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            {room.amenities.slice(0, 4).map((a) => <AmenityChip key={a} name={a} />)}
+                          </div>
+                        )}
+                        <p className="mt-5 text-ink-muted">
+                          <span className="text-lg font-medium text-ink tabular-nums">{inr(room.basePrice)}</span> per night
+                        </p>
+                        <p className="text-sm text-ink-muted"><CountUp value={(room.basePrice ?? 0) * nights * guests} format={(n) => inr(n)} /> for your stay</p>
+                        <Button className="mt-5" onClick={() => handleBook(room.id)} loading={bookingRoomId === room.id}>
+                          {bookingRoomId === room.id ? 'Reserving' : 'Reserve'}
+                        </Button>
+                      </div>
+                    </article>
+                  </Reveal>
                 ))}
               </div>
-              <span className="text-sm text-gray-500">4.5</span>
-            </div>
-            {hotel.contactInfo?.address && (
-              <p className="flex items-center gap-1 text-sm text-gray-500 mt-1">
-                <MapPin size={13} /> {hotel.contactInfo.address || hotel.city}
-              </p>
             )}
           </div>
-          {minPrice > 0 && (
-            <div className="text-right shrink-0">
-              <p className="text-2xl font-bold text-gray-900">₹{minPrice.toFixed(0)}/night</p>
-              <p className="text-xs text-gray-400">Starting price</p>
+
+          {(hotel.contactInfo?.phoneNumber || hotel.contactInfo?.email) && (
+            <div className="mt-10 border-t border-line pt-6">
+              <h2 className="t-h3">Contact</h2>
+              <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm text-ink-muted">
+                {hotel.contactInfo.phoneNumber && <span className="flex items-center gap-2"><Phone size={16} /> {hotel.contactInfo.phoneNumber}</span>}
+                {hotel.contactInfo.email && <span className="flex items-center gap-2"><Envelope size={16} /> {hotel.contactInfo.email}</span>}
+              </div>
             </div>
           )}
         </div>
 
-        {/* ── Amenity tags ────────────────────────────────────────────────── */}
-        {allAmenities.length > 0 && (
-          <div className="flex gap-2 flex-wrap mb-8">
-            {allAmenities.map((a) => (
-              <span key={a}
-                className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl text-sm text-gray-600">
-                {AMENITY_ICONS[a] ?? null} {a}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* ── Booking widget ──────────────────────────────────────────────── */}
-        <div className="border border-gray-200 rounded-2xl p-6 sm:p-8 mb-10">
-          <form onSubmit={handleCheckAvailability}>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-6">
-              {/* Check-In */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Check-In</label>
-                <input
-                  type="date"
-                  value={checkIn}
-                  min={format(addDays(today, 1), 'yyyy-MM-dd')}
-                  onChange={(e) => setCheckIn(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm outline-none focus:border-gray-400"
-                />
-              </div>
-              {/* Check-Out */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Check-Out</label>
-                <input
-                  type="date"
-                  value={checkOut}
-                  min={checkIn}
-                  onChange={(e) => setCheckOut(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm outline-none focus:border-gray-400"
-                />
-              </div>
-              {/* Rooms */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Rooms</label>
-                <input
-                  type="number"
-                  min={1} max={10}
-                  value={guests}
-                  onChange={(e) => setGuests(Number(e.target.value))}
-                  className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm outline-none focus:border-gray-400"
-                />
-              </div>
-            </div>
-            <button
-              type="submit"
-              className="w-full py-4 bg-[#ff385c] text-white rounded-xl font-semibold text-sm hover:bg-[#e21e4a] transition-colors"
-            >
-              Check Availability
-            </button>
-          </form>
-        </div>
-
-        {/* ── Features ────────────────────────────────────────────────────── */}
-        <div className="mb-12 space-y-5">
-          {FEATURES.map((f) => (
-            <div key={f.title} className="flex items-start gap-4">
-              <div className="text-gray-700 mt-0.5 shrink-0">{f.icon}</div>
-              <div>
-                <p className="font-semibold text-gray-900 text-sm">{f.title}</p>
-                <p className="text-gray-500 text-sm">{f.desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* ── Contact ─────────────────────────────────────────────────────── */}
-        {(hotel.contactInfo?.phoneNumber || hotel.contactInfo?.email) && (
-          <div className="border-t border-gray-100 pt-8 mb-12">
-            <h3 className="font-semibold text-gray-800 mb-3 text-sm">Contact</h3>
-            <div className="flex gap-6 text-sm text-gray-500 flex-wrap">
-              {hotel.contactInfo.phoneNumber && (
-                <span className="flex items-center gap-2"><Phone size={14} /> {hotel.contactInfo.phoneNumber}</span>
-              )}
-              {hotel.contactInfo.email && (
-                <span className="flex items-center gap-2"><Mail size={14} /> {hotel.contactInfo.email}</span>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Error */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-6 text-sm">{error}</div>
-        )}
-
-        {/* ── Available rooms ─────────────────────────────────────────────── */}
-        <div ref={roomsRef}>
-          <div className="border-t border-gray-100 pt-10">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">
-              Available Rooms
-              <span className="text-sm font-normal text-gray-400 ml-2">
-                {new Date(checkIn).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} → {new Date(checkOut).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} · {nights} night{nights !== 1 ? 's' : ''}
-              </span>
-            </h2>
-
-            {roomList.length === 0 ? (
-              <p className="text-gray-400 text-center py-12">No rooms available for selected dates.</p>
-            ) : (
-              <div className="space-y-4">
-                {roomList.map((room) => (
-                  <div
-                    key={room.id}
-                    className="border border-gray-200 rounded-2xl p-6 hover:border-gray-400 transition-colors"
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <BedDouble size={18} className="text-gray-600" />
-                          <h3 className="font-semibold text-gray-900">{room.type}</h3>
-                          <span className="text-xs text-gray-400">· up to {room.capacity ?? '–'} guests</span>
-                        </div>
-                        {room.amenities?.length > 0 && (
-                          <div className="flex gap-2 flex-wrap">
-                            {room.amenities.slice(0, 4).map((a) => (
-                              <span key={a}
-                                className="flex items-center gap-1 px-3 py-1 border border-gray-200 rounded-lg text-xs text-gray-500">
-                                {AMENITY_ICONS[a] ?? null} {a}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-6 shrink-0">
-                        <div className="text-right">
-                          <p className="text-xl font-bold text-gray-900">₹{room.basePrice?.toFixed(0)}</p>
-                          <p className="text-xs text-gray-400">/night</p>
-                          <p className="text-sm font-semibold text-gray-700 mt-0.5">
-                            ₹{((room.basePrice ?? 0) * nights * guests).toFixed(0)} total
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => handleBook(room.id)}
-                          disabled={bookingRoomId === room.id}
-                          className="px-6 py-3 bg-[#ff385c] text-white rounded-xl text-sm font-semibold hover:bg-[#e21e4a] disabled:opacity-50 transition-colors"
-                        >
-                          {bookingRoomId === room.id ? 'Booking…' : 'Reserve Now'}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+        {/* Dates panel: sticky beside the rooms on desktop, stacked on small screens */}
+        <aside className="lg:sticky lg:top-28">
+          <Card className="p-5">
+            {minPrice > 0 && (
+              <p className="text-2xl font-bold tabular-nums">
+                {inr(minPrice)} <span className="text-sm font-normal text-ink-muted">per night, from</span>
+              </p>
             )}
-          </div>
-        </div>
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <Input label="Check in" type="date" value={checkIn} min={format(addDays(today, 1), 'yyyy-MM-dd')} onChange={(e) => setCheckIn(e.target.value)} />
+              <Input label="Check out" type="date" value={checkOut} min={checkIn} onChange={(e) => setCheckOut(e.target.value)} />
+              <div className="col-span-2">
+                <Input label="Rooms" type="number" min={1} max={10} value={guests} onChange={(e) => setGuests(Number(e.target.value))} />
+              </div>
+            </div>
+            <Button className="mt-5 w-full" onClick={() => roomsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
+              See rooms
+            </Button>
+          </Card>
+        </aside>
       </div>
     </div>
   );
