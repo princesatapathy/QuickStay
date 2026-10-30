@@ -34,7 +34,7 @@ services:
   - type: web
     name: quickstay-web-princesatapathy
     runtime: static
-    buildCommand: npm --prefix frontend ci && npm --prefix frontend run build
+    buildCommand: corepack enable && pnpm --dir frontend install --frozen-lockfile && pnpm --dir frontend build
     staticPublishPath: ./frontend/dist
     autoDeployTrigger: commit
     envVars:
