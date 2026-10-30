@@ -56,8 +56,8 @@ Swagger UI: http://localhost:8080/api/v1/swagger-ui.html
 
 ```bash
 cd frontend
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 App: http://localhost:3000

@@ -67,7 +67,7 @@ GitHub (main branch)
    |-------|-------|
    | Name | `quickstay-web-princesatapathy` |
    | Branch | `main` |
-   | Build Command | `npm --prefix frontend ci && npm --prefix frontend run build` |
+   | Build Command | `corepack enable && pnpm --dir frontend install --frozen-lockfile && pnpm --dir frontend build` |
    | Publish Directory | `./frontend/dist` |
 
 4. **Environment Variables**:
@@ -130,17 +130,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: frontend/package.json
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
+          node-version: '22'
+          cache: 'pnpm'
+          cache-dependency-path: frontend/pnpm-lock.yaml
 
       - name: Install & build frontend
         run: |
-          npm --prefix frontend ci
-          npm --prefix frontend run build
+          pnpm --dir frontend install --frozen-lockfile
+          pnpm --dir frontend build
 ```
 
 ---
