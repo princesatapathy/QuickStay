@@ -1,6 +1,9 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { AnimatePresence, MotionConfig } from 'motion/react';
 import { AuthProvider } from './context/AuthContext';
-import Navbar from './components/Navbar';
+import Navbar from './components/layout/Navbar';
+import Footer from './components/layout/Footer';
+import { PageTransition } from './components/motion/Motion';
 import Home from './pages/Home';
 import Search from './pages/Search';
 import HotelDetail from './pages/HotelDetail';
@@ -10,44 +13,51 @@ import Register from './pages/Register';
 import Profile from './pages/Profile';
 import AdminPanel from './pages/AdminPanel';
 
-// Separate component so useLocation works inside BrowserRouter
 function AppLayout() {
   const location = useLocation();
-  const isAdmin = location.pathname === '/admin';
+  const { pathname } = location;
 
-  if (isAdmin) {
-    // Admin has its own full-page layout with sidebar — no outer shell
+  // Admin and auth screens bring their own full-page layout.
+  if (pathname === '/admin') {
     return (
       <Routes>
         <Route path="/admin" element={<AdminPanel />} />
       </Routes>
     );
   }
+  const bare = pathname === '/login' || pathname === '/register';
 
   return (
-    <div className="relative min-h-screen bg-white flex flex-col">
-      <Navbar />
-      <main className="flex-1 pt-16">
-        <Routes>
-          <Route path="/"                   element={<Home />} />
-          <Route path="/search"             element={<Search />} />
-          <Route path="/hotels/:hotelId"    element={<HotelDetail />} />
-          <Route path="/booking/:bookingId" element={<BookingDetail />} />
-          <Route path="/login"              element={<Login />} />
-          <Route path="/register"           element={<Register />} />
-          <Route path="/profile"            element={<Profile />} />
-        </Routes>
+    <div className="flex min-h-dvh flex-col bg-night">
+      {!bare && <Navbar />}
+      <main className={`flex-1 ${bare ? '' : pathname === '/' ? '' : 'pt-24'}`}>
+        <AnimatePresence mode="wait">
+          <PageTransition key={pathname}>
+            <Routes location={location}>
+              <Route path="/" element={<Home />} />
+              <Route path="/search" element={<Search />} />
+              <Route path="/hotels/:hotelId" element={<HotelDetail />} />
+              <Route path="/booking/:bookingId" element={<BookingDetail />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/profile" element={<Profile />} />
+            </Routes>
+          </PageTransition>
+        </AnimatePresence>
       </main>
+      {!bare && <Footer />}
     </div>
   );
 }
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <AppLayout />
-      </AuthProvider>
-    </BrowserRouter>
+    <MotionConfig reducedMotion="user">
+      <BrowserRouter>
+        <AuthProvider>
+          <AppLayout />
+        </AuthProvider>
+      </BrowserRouter>
+    </MotionConfig>
   );
 }

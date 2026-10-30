@@ -1,107 +1,87 @@
 @import "tailwindcss";
 
-/* ─── Design tokens — Material Design 3 (Stitch palette) ───────────────────── */
-:root {
-  --font-body: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+/* ─── Design tokens: clean neutral hotel UI. Near-black actions on white and
+   light grey, a serif for headlines, orange only for star ratings.
+   Components use these as utilities (bg-night, text-ink, bg-accent) and never
+   raw hex, so changing the theme means changing this block. The token names
+   keep their meaning: `night` is the page background, `accent` the action
+   colour. ──────────────────────────────────────────────────────────────── */
+@theme {
+  --color-night:        #f8fafc;   /* page background */
+  --color-night-2:      #f1f5f9;   /* alternate band */
+  --color-surface:      #ffffff;   /* cards */
+  --color-surface-2:    #f1f5f9;   /* inputs, hover, chips */
+  --color-line:         #e2e8f0;   /* hairlines */
+  --color-ink:          #0f172a;   /* primary text */
+  --color-ink-muted:    #5b6678;   /* body copy, 5.6:1 on white */
+  --color-ink-faint:    #8b95a5;   /* meta only */
+  --color-accent:       #111111;   /* buttons, links, focus */
+  --color-accent-hover: #2a2a2e;
+  --color-on-accent:    #ffffff;
+  --color-forest:       #0f172a;   /* dark call-to-action card */
+  --color-star:         #f97316;   /* star ratings only */
+  --color-ok:           #15803d;
+  --color-bad:          #b91c1c;
 
-  /* Brand — coral red primary (Airbnb-style) */
-  --color-primary:               #ff385c;
-  --color-on-primary:            #ffffff;
-  --color-primary-container:     #ffe4e8;
-  --color-primary-dim:           #ffb2b6;
-  --color-primary-dark:          #e21e4a;
+  --font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --font-sans:    'Outfit', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
-  /* Surfaces */
-  --color-bg:                    #ffffff;
-  --color-surface:               #f9f9f9;
-  --color-surface-container:     #eeeeee;
-  --color-surface-container-low: #f3f3f3;
-  --color-surface-dim:           #dadada;
-
-  /* Text */
-  --color-on-background:         #1a1c1c;
-  --color-on-surface-variant:    #4a4a4a;
-  --color-muted:                 #757575;
-
-  /* Borders */
-  --color-outline:               #906f70;
-  --color-outline-variant:       #d6c2c3;
-
-  /* Semantic */
-  --color-error:                 #ba1a1a;
-  --color-error-container:       #ffdad6;
-  --color-success:               #1a7a3c;
-  --color-success-container:     #d6f5e3;
-  --color-warning:               #b45309;
-  --color-warning-container:     #fef3c7;
-
-  /* Legacy compat (used in some inline Tailwind classes) */
-  --color-orange: #f97316;
-  --color-teal:   #0d9488;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* ─── Reset / Base ─────────────────────────────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; }
-
-html { scroll-behavior: smooth; }
+/* ─── Base ─────────────────────────────────────────────────────────────────── */
+/* Fluid root size: every rem-based size scales with the screen (14px phone to 16px desktop). */
+html { color-scheme: light; scroll-behavior: smooth; font-size: clamp(14px, 0.5vw + 11.5px, 16px); }
 
 body {
   margin: 0;
-  background: var(--color-bg);
-  color: var(--color-on-background);
-  font-family: var(--font-body);
-  font-size: 16px;
+  background: var(--color-night);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 1rem;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
 
-/* ─── Root ─────────────────────────────────────────────────────────────────── */
-#root {
-  width: 100%;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+#root { min-height: 100dvh; display: flex; flex-direction: column; }
+
+/* Element rules live in the base layer so utilities and .t-* classes can override them.
+   Plain (unlayered) rules beat Tailwind utilities, e.g. `a { color: inherit }` used to
+   override `text-on-accent` on every anchor-based button. */
+@layer base {
+  h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height: 1.15; letter-spacing: 0; font-variant-numeric: lining-nums; }
+  a { color: inherit; text-decoration: none; }
+  img { max-width: 100%; display: block; }
 }
 
-/* ─── Typography — Manrope for everything ──────────────────────────────────── */
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-body);
-  font-weight: 700;
-  line-height: 1.2;
-  letter-spacing: -0.02em;
-  /* No color here — let Tailwind utility classes (text-white, text-gray-900, etc.) win */
-  margin: 0;
+::selection { background: var(--color-accent); color: var(--color-on-accent); }
+*:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 3px; }
+
+input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0.6; cursor: pointer; }
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-line); border-radius: 999px; }
+
+@layer components {
+  /* Fluid type scale. Playfair is a high-contrast serif: bold for the hero, regular for sections. */
+  .t-display { font-size: clamp(2.3rem, 1.2rem + 3.8vw, 3.75rem); line-height: 1.08; font-weight: 800; }
+  .t-h2      { font-size: clamp(1.9rem, 1.35rem + 1.8vw, 2.7rem); line-height: 1.15; font-weight: 400; }
+  .t-h3      { font-size: clamp(1.25rem, 1.1rem + 0.6vw, 1.6rem); line-height: 1.25; font-weight: 500; }
+  /* Small spaced caps for meta lines. Used sparingly, never as a section eyebrow. */
+  .t-label   { font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 500; color: var(--color-ink-muted); }
 }
 
-p, span, button, input, select, textarea, label {
-  font-family: var(--font-body);
-  margin: 0;
+.glass {
+  background: rgb(255 255 255 / 0.78);
+  backdrop-filter: blur(14px) saturate(120%);
+  -webkit-backdrop-filter: blur(14px) saturate(120%);
+  border: 1px solid rgb(255 255 255 / 0.5);
+}
+@media (prefers-reduced-transparency: reduce) {
+  .glass { background: var(--color-surface); backdrop-filter: none; -webkit-backdrop-filter: none; }
 }
 
-a { color: inherit; text-decoration: none; }
-
-/* ─── Scrollbar (webkit) ───────────────────────────────────────────────────── */
-::-webkit-scrollbar              { width: 6px; height: 6px; }
-::-webkit-scrollbar-track        { background: transparent; }
-::-webkit-scrollbar-thumb        { background: var(--color-outline-variant); border-radius: 999px; }
-::-webkit-scrollbar-thumb:hover  { background: var(--color-outline); }
-
-/* ─── Date input ───────────────────────────────────────────────────────────── */
-input[type="date"]::-webkit-calendar-picker-indicator {
-  opacity: 0.5;
-  cursor: pointer;
-}
-
-/* ─── Focus ring ───────────────────────────────────────────────────────────── */
-*:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
-
-/* ─── Images ───────────────────────────────────────────────────────────────── */
-img {
-  max-width: 100%;
-  display: block;
-}
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
