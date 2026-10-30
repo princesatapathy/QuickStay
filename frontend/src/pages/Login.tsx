@@ -51,6 +51,7 @@ export default function Login() {
         {error && <Banner tone="error">{error}</Banner>}
         <Input label="Email" type="email" autoComplete="email" required value={email} onChange={(e) => { setEmail(e.target.value); setError(''); }} placeholder="you@example.com" />
         <PasswordInput label="Password" autoComplete="current-password" required value={password} onChange={(e) => { setPassword(e.target.value); setError(''); }} />
+        <div className="text-right"><Link to="/forgot-password" className="text-sm font-medium text-ink-muted hover:text-ink hover:underline">Forgot password?</Link></div>
         <Button type="submit" size="lg" className="w-full" loading={loading}>{loading ? 'Logging in' : 'Log in'}</Button>
       </form>
     </AuthLayout>
