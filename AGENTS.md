@@ -36,7 +36,7 @@ cd frontend; pnpm install; pnpm dev
 - API base: `http://localhost:8081/api/v1` (context path `/api/v1`). Swagger UI: `/api/v1/swagger-ui.html`.
 - Default profile is `dev` (`spring.profiles.default=dev`). `ddl-auto=update` in dev, `validate` in prod.
 - Tests: `./mvnw verify` runs unit tests (Surefire, `*Test`) and integration tests (Failsafe, `*IT`) and writes a JaCoCo report to `target/site/jacoco/index.html`. Database tests need a real Postgres and **fail, never skip**, if none is available: either start Docker (Testcontainers), or set `TEST_DATABASE_URL=jdbc:postgresql://localhost:5432/airbnb_test` (plus `TEST_DATABASE_USER`, default `postgres`, and `TEST_DATABASE_PASSWORD`). The external database's schema is **wiped before each run**, so its name must contain `test`; the harness refuses anything else. Never point it at `airbnb`.
-- Production build check: `cd frontend; pnpm build` (runs `tsc -b` first).
+- Frontend checks: `pnpm test` (Vitest + Testing Library, jsdom, threads pool because the forks pool fails to start on Windows with recent Node), `pnpm typecheck`, `pnpm build` (runs `tsc -b` first). Put tests next to the code as `*.test.tsx`.
 
 ## Environment variables (names only, values are secrets)
 
