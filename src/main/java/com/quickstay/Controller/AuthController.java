@@ -1,11 +1,14 @@
 package com.quickstay.Controller;
 
+import com.quickstay.Dto.ForgotPasswordDTO;
 import com.quickstay.Dto.LoginDTO;
 import com.quickstay.Dto.LoginResponseDTO;
 import com.quickstay.Dto.ManagerSignUpRequestDTO;
+import com.quickstay.Dto.ResetPasswordDTO;
 import com.quickstay.Dto.SignUpRequestDTO;
 import com.quickstay.Dto.UserDTO;
 import com.quickstay.Security.AuthService;
+import com.quickstay.Security.PasswordResetService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
@@ -30,6 +33,21 @@ import java.util.Arrays;
 @Tag(name = "User Authentication", description = "Authentication Operations related to users")
 public class AuthController {
     private final AuthService authService;
+    private final PasswordResetService passwordResetService;
+
+    @PostMapping("/forgot-password")
+    @Operation(summary = "Request a password reset", description = "Emails a single-use reset link if the account exists. Always returns 204.")
+    public ResponseEntity<Void> forgotPassword(@Valid @RequestBody ForgotPasswordDTO request) {
+        passwordResetService.requestReset(request.getEmail());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/reset-password")
+    @Operation(summary = "Reset a password", description = "Sets a new password using the emailed token.")
+    public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordDTO request) {
+        passwordResetService.resetPassword(request.getToken(), request.getNewPassword());
+        return ResponseEntity.noContent().build();
+    }
 
     @PostMapping("/signup")
     @Operation(summary = "Sign up a new user", description = "Creates a new user account.")
