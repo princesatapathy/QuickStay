@@ -30,13 +30,13 @@ Backend, from the repo root, **on port 8081** (the Vite dev proxy targets 8081; 
 Frontend (Vite dev server on port 3000, proxies `/api` to the backend):
 
 ```powershell
-cd frontend; npm install; npm run dev
+cd frontend; pnpm install; pnpm dev
 ```
 
 - API base: `http://localhost:8081/api/v1` (context path `/api/v1`). Swagger UI: `/api/v1/swagger-ui.html`.
 - Default profile is `dev` (`spring.profiles.default=dev`). `ddl-auto=update` in dev, `validate` in prod.
 - Tests: `./mvnw test`. They use Testcontainers, so **Docker must be running**.
-- Production build check: `cd frontend; npm run build` (runs `tsc -b` first).
+- Production build check: `cd frontend; pnpm build` (runs `tsc -b` first).
 
 ## Environment variables (names only, values are secrets)
 
@@ -56,7 +56,7 @@ cd frontend; npm install; npm run dev
 - **Flyway is strict.** Migrations live in `src/main/resources/db/migration/`. **Never edit a migration that has already been applied**: Flyway stores a checksum and refuses to start ("Migration checksum mismatch"). Add `V2__...sql` instead. `V1__init.sql` was edited after some databases were created (four `hotel` columns renamed from `contact_info_*` to `address`, `phone_number`, `email`, `location`); a database created before that needs its stored checksum for version 1 updated (what `flyway repair` does) before the app will start. Back up first and do not drop a database that holds data.
 - `Invalid method Code length 0 in class file ...` on startup means `target/` is corrupted (an interrupted or overlapping build). Run `./mvnw clean compile` and do not run two Maven builds at once.
 - Windows PowerShell: quote `-D...` arguments as in the command above.
-- The dev machine's C: drive is low on space. Put the npm cache on D: (`npm install --cache D:/npm-cache`).
+- The dev machine's C: drive is low on space. Keep the pnpm store on D: (`pnpm install --store-dir D:/pnpm-store`) so `node_modules` hard-links from it instead of copying.
 
 ## Backend architecture (what matters)
 
@@ -87,6 +87,7 @@ Controller/  Service/(Interfaces, *Impl)  Repositories/  Entities/  Dto/  Enums/
 
 ## Frontend (`frontend/`)
 
+- **Package manager is pnpm** (pinned in `package.json` `packageManager`). Never run `npm install` or commit a `package-lock.json`.
 - React 19, Vite, Tailwind v4, `motion/react`, `@phosphor-icons/react`, `date-fns`, axios, react-router.
 - Layout: `src/pages/` (Home, Search, HotelDetail, BookingDetail, Login, Register, Profile, AdminPanel), `src/components/ui|layout|motion|home`, `src/api/` (typed axios wrappers, token refresh in `client.ts`), `src/context/AuthContext.tsx`, `src/lib/` (`images.ts`, `dates.ts`).
 - `AdminPanel` is a single file driven by local `page` state, not router routes. Some admin calls use the raw axios client because no wrapper exists.
@@ -105,7 +106,7 @@ Controller/  Service/(Interfaces, *Impl)  Repositories/  Entities/  Dto/  Enums/
 
 ## Deploy
 
-Render auto-deploys on every commit to `main` (`render.yaml`, `autoDeployTrigger: commit`). Do not push breaking changes casually. The backend stays at the repo root because `render.yaml`, `Dockerfile` and `compose.yaml` assume it. The SPA builds with `npm --prefix frontend ci && npm --prefix frontend run build`, so **`frontend/package-lock.json` must stay in sync with `package.json`**. Details: `docs/DEPLOY.md`.
+Render auto-deploys on every commit to `main` (`render.yaml`, `autoDeployTrigger: commit`). Do not push breaking changes casually. The backend stays at the repo root because `render.yaml`, `Dockerfile` and `compose.yaml` assume it. The SPA builds with `corepack enable && pnpm --dir frontend install --frozen-lockfile && pnpm --dir frontend build`, so **`frontend/pnpm-lock.yaml` must stay in sync with `package.json`**. Details: `docs/DEPLOY.md`.
 
 ## Rules for agents
 
