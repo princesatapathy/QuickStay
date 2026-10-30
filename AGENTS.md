@@ -17,7 +17,9 @@ compose.yaml, Dockerfile   Local full-stack Docker run (separate Postgres 16, no
 .env.example               Placeholders only. NEVER put real secrets here, it is tracked by git.
 ```
 
-Do not add screenshots, logs, `hs_err_pid*.log` or scratch scripts to the repo. `.gitignore` covers them.
+Do not add logs, `hs_err_pid*.log` or scratch scripts to the repo. `.gitignore` covers them.
+
+**Screenshots:** save every screenshot in the `screenshot/` folder at the repo root. It is gitignored and never committed.
 
 ## Run it locally
 

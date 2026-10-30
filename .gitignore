@@ -66,3 +66,4 @@ CLAUDE.md
 *.err
 hs_err_pid*.log
 /*.png
+screenshot/
