@@ -15,8 +15,8 @@ export default function AuthLayout({
   footer: ReactNode;
 }) {
   return (
-    <div className="grid min-h-dvh lg:grid-cols-2">
-      <div className="flex flex-col px-6 py-8 sm:px-12">
+    <div className="grid h-dvh overflow-hidden lg:grid-cols-2">
+      <div className="no-scrollbar flex flex-col overflow-y-auto px-6 py-8 sm:px-12">
         <Logo />
         <motion.div
           className="mx-auto my-auto w-full max-w-sm py-12"

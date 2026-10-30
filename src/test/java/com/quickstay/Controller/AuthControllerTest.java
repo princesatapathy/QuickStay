@@ -31,6 +31,7 @@ class AuthControllerTest {
     @Autowired private MockMvc mockMvc;
 
     @MockBean private AuthService authService;
+    @MockBean private com.quickstay.Security.PasswordResetService passwordResetService;
     @MockBean private JWTAuthFilter jwtAuthFilter;
 
     @Test
@@ -67,6 +68,71 @@ class AuthControllerTest {
     void refresh_without_cookie_returns_401() throws Exception {
         mockMvc.perform(post("/auth/refresh"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void forgot_password_always_returns_204() throws Exception {
+        mockMvc.perform(post("/auth/forgot-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email":"a@b.com"}
+                                """))
+                .andExpect(status().isNoContent());
+        org.mockito.Mockito.verify(passwordResetService).requestReset("a@b.com");
+    }
+
+    @Test
+    void forgot_password_rejects_a_malformed_email() throws Exception {
+        mockMvc.perform(post("/auth/forgot-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email":"not-an-email"}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void reset_password_returns_204_for_a_valid_request() throws Exception {
+        mockMvc.perform(post("/auth/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email":"a@b.com","otp":"123456","newPassword":"long-enough-pw"}
+                                """))
+                .andExpect(status().isNoContent());
+        org.mockito.Mockito.verify(passwordResetService).resetPassword("a@b.com", "123456", "long-enough-pw");
+    }
+
+    @Test
+    void reset_password_rejects_a_short_password() throws Exception {
+        mockMvc.perform(post("/auth/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email":"a@b.com","otp":"123456","newPassword":"short"}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void reset_password_rejects_a_code_that_is_not_six_digits() throws Exception {
+        mockMvc.perform(post("/auth/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email":"a@b.com","otp":"12ab56","newPassword":"long-enough-pw"}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void reset_password_with_a_bad_code_returns_400() throws Exception {
+        org.mockito.Mockito.doThrow(new IllegalArgumentException("Code is invalid or has expired"))
+                .when(passwordResetService).resetPassword(anyString(), anyString(), anyString());
+
+        mockMvc.perform(post("/auth/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email":"a@b.com","otp":"654321","newPassword":"long-enough-pw"}
+                                """))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
