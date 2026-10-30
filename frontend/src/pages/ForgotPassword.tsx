@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { forgotPassword } from '../api/auth';
 import AuthLayout from '../components/layout/AuthLayout';
 import { Button } from '../components/ui/Button';
@@ -7,10 +7,10 @@ import { Input } from '../components/ui/Form';
 import { Banner } from '../components/ui/Display';
 
 export default function ForgotPassword() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [sent, setSent] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,11 +18,11 @@ export default function ForgotPassword() {
     setError('');
     try {
       await forgotPassword({ email });
-      setSent(true);
+      // The email travels in router state, not the URL, so it stays out of history and logs.
+      navigate('/reset-password', { state: { email } });
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
-      setError(e.response?.data?.message || 'Could not send the reset link. Try again.');
-    } finally {
+      setError(e.response?.data?.message || 'Could not send the code. Try again.');
       setLoading(false);
     }
   };
@@ -30,18 +30,14 @@ export default function ForgotPassword() {
   return (
     <AuthLayout
       title="Forgot password"
-      subtitle="Enter your email and we will send you a link to choose a new one."
+      subtitle="Enter your email and we will send you a 6-digit code."
       footer={<Link to="/login" className="font-bold text-accent hover:underline">Back to log in</Link>}
     >
-      {sent ? (
-        <Banner tone="success">If an account exists for {email}, a reset link is on its way. It works once and expires in 30 minutes.</Banner>
-      ) : (
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && <Banner tone="error">{error}</Banner>}
-          <Input label="Email" type="email" autoComplete="email" required value={email} onChange={(e) => { setEmail(e.target.value); setError(''); }} placeholder="you@example.com" />
-          <Button type="submit" size="lg" className="w-full" loading={loading}>Send reset link</Button>
-        </form>
-      )}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {error && <Banner tone="error">{error}</Banner>}
+        <Input label="Email" type="email" autoComplete="email" required value={email} onChange={(e) => { setEmail(e.target.value); setError(''); }} placeholder="you@example.com" />
+        <Button type="submit" size="lg" className="w-full" loading={loading}>Send code</Button>
+      </form>
     </AuthLayout>
   );
 }

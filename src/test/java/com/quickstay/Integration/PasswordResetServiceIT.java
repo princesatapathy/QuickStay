@@ -2,7 +2,7 @@ package com.quickstay.Integration;
 
 import com.quickstay.Entities.UserEntity;
 import com.quickstay.Enums.Role;
-import com.quickstay.Repositories.PasswordResetTokenRepository;
+import com.quickstay.Repositories.PasswordResetOtpRepository;
 import com.quickstay.Repositories.UserRepository;
 import com.quickstay.Security.PasswordResetMailer;
 import com.quickstay.Security.PasswordResetService;
@@ -35,7 +35,7 @@ class PasswordResetServiceIT extends PostgresTestBase {
     private static final String EMAIL = "reset-user@example.com";
 
     @Autowired private PasswordResetService passwordResetService;
-    @Autowired private PasswordResetTokenRepository tokenRepository;
+    @Autowired private PasswordResetOtpRepository otpRepository;
     @Autowired private UserRepository userRepository;
     @Autowired private PasswordEncoder passwordEncoder;
 
@@ -43,7 +43,7 @@ class PasswordResetServiceIT extends PostgresTestBase {
 
     @BeforeEach
     void freshUser() {
-        tokenRepository.deleteAll();
+        otpRepository.deleteAll();
         userRepository.findByEmail(EMAIL).ifPresent(userRepository::delete);
         UserEntity user = new UserEntity();
         user.setEmail(EMAIL);
@@ -52,27 +52,32 @@ class PasswordResetServiceIT extends PostgresTestBase {
         userRepository.saveAndFlush(user);
     }
 
-    private String requestAndCaptureToken() {
+    private String requestAndCaptureCode() {
         passwordResetService.requestReset(EMAIL);
-        ArgumentCaptor<String> link = ArgumentCaptor.forClass(String.class);
-        verify(mailer).sendResetLink(eq(EMAIL), link.capture());
-        return link.getValue().substring(link.getValue().indexOf("token=") + "token=".length());
+        ArgumentCaptor<String> code = ArgumentCaptor.forClass(String.class);
+        verify(mailer).sendResetCode(eq(EMAIL), code.capture());
+        return code.getValue();
+    }
+
+    private String wrongCodeFor(String realCode) {
+        return realCode.equals("000000") ? "111111" : "000000";
     }
 
     @Test
     void unknown_email_sends_nothing_and_stores_nothing() {
         passwordResetService.requestReset("nobody@example.com");
 
-        verify(mailer, never()).sendResetLink(anyString(), anyString());
-        assertThat(tokenRepository.count()).isZero();
+        verify(mailer, never()).sendResetCode(anyString(), anyString());
+        assertThat(otpRepository.count()).isZero();
     }
 
     @Test
-    void known_email_gets_one_link_and_only_the_hash_is_stored() {
-        String rawToken = requestAndCaptureToken();
+    void known_email_gets_a_six_digit_code_and_only_a_hash_is_stored() {
+        String code = requestAndCaptureCode();
 
-        assertThat(tokenRepository.findAll()).hasSize(1)
-                .allSatisfy(stored -> assertThat(stored.getTokenHash()).isNotEqualTo(rawToken).hasSize(64));
+        assertThat(code).matches("\\d{6}");
+        assertThat(otpRepository.findAll()).hasSize(1)
+                .allSatisfy(stored -> assertThat(stored.getOtpHash()).isNotEqualTo(code).startsWith("$2"));
     }
 
     @Test
@@ -80,44 +85,71 @@ class PasswordResetServiceIT extends PostgresTestBase {
         passwordResetService.requestReset(EMAIL);
         passwordResetService.requestReset(EMAIL);
 
-        verify(mailer, times(1)).sendResetLink(eq(EMAIL), anyString());
-        assertThat(tokenRepository.count()).isEqualTo(1);
+        verify(mailer, times(1)).sendResetCode(eq(EMAIL), anyString());
+        assertThat(otpRepository.count()).isEqualTo(1);
     }
 
     @Test
     void mail_failure_is_swallowed_so_the_response_cannot_reveal_the_account() {
-        doThrow(new IllegalStateException("smtp down")).when(mailer).sendResetLink(anyString(), anyString());
+        doThrow(new IllegalStateException("smtp down")).when(mailer).sendResetCode(anyString(), anyString());
 
         passwordResetService.requestReset(EMAIL);
     }
 
     @Test
-    void valid_token_changes_the_password_once() {
-        String rawToken = requestAndCaptureToken();
+    void valid_code_changes_the_password_once() {
+        String code = requestAndCaptureCode();
 
-        passwordResetService.resetPassword(rawToken, "brand-new-password");
+        passwordResetService.resetPassword(EMAIL, code, "brand-new-password");
 
         UserEntity user = userRepository.findByEmail(EMAIL).orElseThrow();
         assertThat(passwordEncoder.matches("brand-new-password", user.getPassword())).isTrue();
-        assertThatThrownBy(() -> passwordResetService.resetPassword(rawToken, "another-password"))
+        assertThatThrownBy(() -> passwordResetService.resetPassword(EMAIL, code, "another-password"))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
-    void unknown_token_is_rejected() {
-        assertThatThrownBy(() -> passwordResetService.resetPassword("not-a-real-token", "brand-new-password"))
+    void wrong_code_is_rejected_and_password_is_unchanged() {
+        String code = requestAndCaptureCode();
+
+        assertThatThrownBy(() -> passwordResetService.resetPassword(EMAIL, wrongCodeFor(code), "brand-new-password"))
                 .isInstanceOf(IllegalArgumentException.class);
+
+        UserEntity user = userRepository.findByEmail(EMAIL).orElseThrow();
+        assertThat(passwordEncoder.matches("old-password", user.getPassword())).isTrue();
     }
 
     @Test
-    void expired_token_is_rejected_and_password_is_unchanged() {
-        String rawToken = requestAndCaptureToken();
-        tokenRepository.findAll().forEach(stored -> {
+    void code_for_an_unknown_email_is_rejected_with_the_same_error() {
+        assertThatThrownBy(() -> passwordResetService.resetPassword("nobody@example.com", "123456", "brand-new-password"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Code is invalid or has expired");
+    }
+
+    @Test
+    void five_wrong_guesses_burn_the_code_even_for_the_right_answer() {
+        String code = requestAndCaptureCode();
+
+        for (int guess = 0; guess < 5; guess++) {
+            assertThatThrownBy(() -> passwordResetService.resetPassword(EMAIL, wrongCodeFor(code), "brand-new-password"))
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+
+        assertThatThrownBy(() -> passwordResetService.resetPassword(EMAIL, code, "brand-new-password"))
+                .isInstanceOf(IllegalArgumentException.class);
+        UserEntity user = userRepository.findByEmail(EMAIL).orElseThrow();
+        assertThat(passwordEncoder.matches("old-password", user.getPassword())).isTrue();
+    }
+
+    @Test
+    void expired_code_is_rejected_and_password_is_unchanged() {
+        String code = requestAndCaptureCode();
+        otpRepository.findAll().forEach(stored -> {
             stored.setExpiresAt(Instant.now().minusSeconds(1));
-            tokenRepository.saveAndFlush(stored);
+            otpRepository.saveAndFlush(stored);
         });
 
-        assertThatThrownBy(() -> passwordResetService.resetPassword(rawToken, "brand-new-password"))
+        assertThatThrownBy(() -> passwordResetService.resetPassword(EMAIL, code, "brand-new-password"))
                 .isInstanceOf(IllegalArgumentException.class);
 
         UserEntity user = userRepository.findByEmail(EMAIL).orElseThrow();

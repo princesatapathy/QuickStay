@@ -18,13 +18,13 @@ public class SmtpPasswordResetMailer implements PasswordResetMailer {
     private String from;
 
     @Override
-    public void sendResetLink(String toEmail, String resetUrl) {
+    public void sendResetCode(String toEmail, String code) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(from);
         message.setTo(toEmail);
-        message.setSubject("Reset your QuickStay password");
-        message.setText("Use this link to choose a new password. It expires in 30 minutes and works once:\n\n"
-                + resetUrl + "\n\nIf you did not ask for this, ignore this email.");
+        message.setSubject("Your QuickStay password reset code");
+        message.setText("Your code is " + code + ". It expires in 10 minutes and works once.\n\n"
+                + "If you did not ask for this, ignore this email.");
         mailSender.send(message);
     }
 }

@@ -96,10 +96,10 @@ class AuthControllerTest {
         mockMvc.perform(post("/auth/reset-password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"token":"abc","newPassword":"long-enough-pw"}
+                                {"email":"a@b.com","otp":"123456","newPassword":"long-enough-pw"}
                                 """))
                 .andExpect(status().isNoContent());
-        org.mockito.Mockito.verify(passwordResetService).resetPassword("abc", "long-enough-pw");
+        org.mockito.Mockito.verify(passwordResetService).resetPassword("a@b.com", "123456", "long-enough-pw");
     }
 
     @Test
@@ -107,20 +107,30 @@ class AuthControllerTest {
         mockMvc.perform(post("/auth/reset-password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"token":"abc","newPassword":"short"}
+                                {"email":"a@b.com","otp":"123456","newPassword":"short"}
                                 """))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
-    void reset_password_with_a_bad_token_returns_400() throws Exception {
-        org.mockito.Mockito.doThrow(new IllegalArgumentException("Reset link is invalid or has expired"))
-                .when(passwordResetService).resetPassword(anyString(), anyString());
+    void reset_password_rejects_a_code_that_is_not_six_digits() throws Exception {
+        mockMvc.perform(post("/auth/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email":"a@b.com","otp":"12ab56","newPassword":"long-enough-pw"}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void reset_password_with_a_bad_code_returns_400() throws Exception {
+        org.mockito.Mockito.doThrow(new IllegalArgumentException("Code is invalid or has expired"))
+                .when(passwordResetService).resetPassword(anyString(), anyString(), anyString());
 
         mockMvc.perform(post("/auth/reset-password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"token":"bad","newPassword":"long-enough-pw"}
+                                {"email":"a@b.com","otp":"654321","newPassword":"long-enough-pw"}
                                 """))
                 .andExpect(status().isBadRequest());
     }

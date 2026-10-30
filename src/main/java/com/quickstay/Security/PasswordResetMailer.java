@@ -1,5 +1,5 @@
 package com.quickstay.Security;
 
 public interface PasswordResetMailer {
-    void sendResetLink(String toEmail, String resetUrl);
+    void sendResetCode(String toEmail, String code);
 }
