@@ -27,10 +27,10 @@ function AppLayout() {
       </Routes>
     );
   }
-  const bare = pathname === '/login' || pathname === '/register';
+  const bare = ['/login', '/register', '/forgot-password', '/reset-password'].includes(pathname);
 
   return (
-    <div className="flex min-h-dvh flex-col bg-night">
+    <div className={`flex flex-col bg-night ${bare ? 'h-dvh overflow-hidden' : 'min-h-dvh'}`}>
       {!bare && <Navbar />}
       <main className={`flex-1 ${bare ? '' : pathname === '/' ? '' : 'pt-24'}`}>
         <AnimatePresence mode="wait">
